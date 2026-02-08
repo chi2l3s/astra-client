@@ -1,57 +1,125 @@
-# React + TypeScript + Vite
+# Astra Client 🌌
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
+![Electron](https://img.shields.io/badge/Electron-28.0.0-blueviolet.svg)
+![React](https://img.shields.io/badge/React-18.2.0-61dafb.svg)
 
-Currently, two official plugins are available:
+**Astra Client** — это современный, красивый и функциональный лаунчер для Minecraft, построенный на веб-технологиях. Он сочетает в себе минималистичный дизайн с мощными возможностями управления игрой.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+![Screenshot Placeholder](public/changelog.png)
 
-## Expanding the ESLint configuration
+## ✨ Возможности
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 🎮 Управление Игрой
+- **Мульти-версионность**: Установка и запуск любых версий Minecraft (Release, Snapshot).
+- **Авто-установка Fabric**: Лаунчер автоматически скачивает и устанавливает Fabric Loader, если он требуется.
+- **Умный запуск**: Автоматическое определение установленных версий Java (включая Java 21 для новых версий игры).
+- **Изоляция**: Каждая версия имеет свою изолированную папку для модов, конфигов и сохранений.
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### 🛠 Кастомизация и Моды
+- **Менеджер Контента**: Просмотр и управление установленными модами, ресурспаками и мирами прямо из лаунчера.
+- **Интеграция Modrinth** (В разработке): Поиск и установка модов напрямую из интерфейса.
+- **Темы Оформления**:
+  - Встроенные темы (Dark, Light, Minecraft Green, Nether Red и др.).
+  - **Редактор тем**: Настройка акцентного цвета.
+  - **Импорт/Экспорт**: Возможность делиться своими темами (JSON).
+
+### 🔐 Аккаунты
+- **Microsoft Auth**: Полноценная поддержка лицензионных аккаунтов.
+- **Offline Mode**: Возможность играть без лицензии (с произвольным никнеймом).
+- **Мультиаккаунт**: Быстрое переключение между профилями.
+
+### ⚙️ Продвинутые Настройки
+- Настройка выделения оперативной памяти (RAM) с визуальным слайдером.
+- Выбор разрешения окна и полноэкранный режим.
+- Аргументы JVM.
+- Управление поведением лаунчера после запуска игры.
+
+## 🛠 Технологический Стек
+
+Проект построен на современном стеке технологий (Electron + Vite + React):
+
+- **Core**: [Electron](https://www.electronjs.org/)
+- **Frontend**: [React](https://reactjs.org/), [TypeScript](https://www.typescriptlang.org/)
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **UI Components**: [Lucide React](https://lucide.dev/), [Framer Motion](https://www.framer.com/motion/)
+- **Minecraft Core**: [minecraft-launcher-core](https://github.com/Pierce01/MinecraftLauncher-core)
+- **Auth**: [MSMC](https://github.com/Hanro50/msmc)
+
+## 🚀 Установка и Запуск (Для Разработчиков)
+
+### Предварительные требования
+- **Node.js**: Версия 18 или выше.
+- **Java**: Рекомендуется установить JDK 17 и JDK 21 для поддержки всех версий Minecraft.
+
+### Шаги установки
+
+1. **Клонируйте репозиторий:**
+   ```bash
+   git clone https://github.com/your-username/astra-client.git
+   cd astra-client
+   ```
+
+2. **Установите зависимости:**
+   ```bash
+   npm install
+   ```
+
+3. **Запустите в режиме разработки:**
+   ```bash
+   npm run electron:dev
+   ```
+   Эта команда запустит Vite сервер и окно Electron с горячей перезагрузкой (HMR).
+
+### Сборка проекта
+
+Для создания установочного файла (`.exe` для Windows):
+
+1. **Подготовьте ресурсы (Опционально):**
+   Поместите `icon.ico` в папку `build/` для иконки установщика.
+
+2. **Запустите сборку:**
+   ```bash
+   npm run electron:build
+   ```
+
+3. Готовый установщик будет находиться в папке `release/`.
+
+## 📂 Структура Проекта
+
+```
+astra-client/
+├── electron/           # Исходный код Main процесса Electron
+│   ├── main.ts         # Точка входа, IPC хендлеры, запуск игры
+│   └── preload.ts      # Мост между Electron и React
+├── src/                # Исходный код Frontend (React)
+│   ├── components/     # UI компоненты (Button, Layout, etc.)
+│   ├── pages/          # Страницы (Home, Settings, Content, etc.)
+│   ├── store/          # Глобальный стейт (Zustand)
+│   ├── types/          # TypeScript интерфейсы
+│   └── lib/            # Утилиты
+├── public/             # Статические ресурсы (картинки)
+├── build/              # Ресурсы для сборщика (иконки установщика)
+└── release/            # Папка с готовыми билдами
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🤝 Вклад в проект (Contributing)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Мы приветствуем любой вклад! Если вы нашли ошибку или хотите предложить новую функцию:
 
-export default tseslint.config({
-  extends: [
-    // other configs...
-    // Enable lint rules for React
-    reactX.configs['recommended-typescript'],
-    // Enable lint rules for React DOM
-    reactDom.configs.recommended,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+1. Создайте Issue с описанием проблемы.
+2. Сделайте Fork репозитория.
+3. Создайте ветку для ваших изменений (`git checkout -b feature/AmazingFeature`).
+4. Закоммитьте изменения (`git commit -m 'Add some AmazingFeature'`).
+5. Запушьте ветку (`git push origin feature/AmazingFeature`).
+6. Откройте Pull Request.
+
+## 📄 Лицензия
+
+Распространяется под лицензией MIT. Подробнее см. в файле [LICENSE](LICENSE).
+
+---
+*Created with ❤️ by Astra Team*
