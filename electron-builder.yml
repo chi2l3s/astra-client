@@ -1,0 +1,34 @@
+appId: com.astraclient.launcher
+productName: Astra Client
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist-electron/**/*
+  - dist/**/*
+  - package.json
+win:
+  target: nsis
+  icon: build/icon.ico
+  legalTrademarks: "Astra Team"
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+  runAfterFinish: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Astra Client
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  deleteAppDataOnUninstall: true
+  # Для кастомизации установщика (сделать "красиво"):
+  # Раскомментируйте строки ниже и добавьте соответствующие BMP изображения в папку build/
+  # installerSidebar: build/sidebar.bmp      # 164x314 px
+  # uninstallerSidebar: build/sidebar.bmp    # 164x314 px
+  # installerHeader: build/header.bmp        # 150x57 px
+publish:
+  provider: github
+  owner: astra-team
+  repo: astra-client
