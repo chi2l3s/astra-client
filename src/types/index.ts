@@ -40,6 +40,7 @@ export interface Account {
   uuid: string;
   avatarUrl?: string;
   isActive: boolean;
+  accessToken?: string;
 }
 
 export interface MinecraftVersion {

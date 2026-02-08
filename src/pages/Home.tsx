@@ -127,7 +127,7 @@ const Home = () => {
   };
 
   return (
-    <div className="space-y-8 relative h-full flex flex-col">
+    <div className="space-y-8 relative min-h-full flex flex-col">
       <header className="flex justify-between items-end">
         <div>
           <h1 className="text-4xl font-bold mb-2">
@@ -138,7 +138,7 @@ const Home = () => {
       </header>
 
       {/* Hero Section / Content Area */}
-      <div className="flex-1 grid grid-cols-3 gap-6 min-h-0">
+      <div className="flex-1 grid grid-cols-3 gap-6">
          <div className="col-span-2 relative rounded-3xl overflow-hidden group border border-white/5 bg-black/40 flex flex-col">
             {/* Stats Overlay */}
             <div className="absolute top-6 left-8 right-8 flex gap-8 z-20">

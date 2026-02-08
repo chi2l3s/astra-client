@@ -4,7 +4,7 @@
   "description": "Advanced Minecraft Launcher",
   "author": "Astra Team",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.2",
   "main": "dist-electron/main.js",
   "type": "module",
   "scripts": {
@@ -17,7 +17,8 @@
     "ts:watch": "tsc -p electron/tsconfig.json -w",
     "electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
     "electron:dev": "concurrently -k \"cross-env BROWSER=none npm run dev\" \"npm run ts:watch\" \"npm run electron\"",
-    "electron:build": "vite build && npm run ts:build && electron-builder"
+    "electron:build": "vite build && npm run ts:build && electron-builder",
+    "electron:publish": "vite build && npm run ts:build && dotenv -e .env -- electron-builder --publish always"
   },
   "dependencies": {
     "@react-three/drei": "^9.96.1",
@@ -48,6 +49,7 @@
     "babel-plugin-react-dev-locator": "^1.0.0",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
+    "dotenv-cli": "^11.0.0",
     "electron": "^28.1.0",
     "electron-builder": "^24.9.1",
     "eslint": "^9.25.0",

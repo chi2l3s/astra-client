@@ -568,6 +568,42 @@ ipcMain.handle('load-theme', async () => {
   return { canceled: true };
 });
 
+ipcMain.handle('upload-skin', async (event, { token, skinData, variant = 'classic' }) => {
+  if (!token) return { success: false, error: "Требуется лицензионный аккаунт" };
+
+  try {
+    // skinData is "data:image/png;base64,..."
+    const base64Data = skinData.split(',')[1];
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    const formData = new FormData();
+    formData.append('variant', variant);
+    
+    // Create a Blob from the buffer
+    const blob = new Blob([buffer], { type: 'image/png' });
+    formData.append('file', blob, 'skin.png');
+
+    const response = await fetch('https://api.minecraftservices.com/minecraft/profile/skins', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+        body: formData
+    });
+
+    if (!response.ok) {
+        // const err = await response.text();
+        // console.error("Mojang Error Body:", err);
+        throw new Error(`Ошибка Mojang API: ${response.statusText}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Upload Skin Error:', error);
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+  }
+});
+
 ipcMain.on('restart-app', () => {
     autoUpdater.quitAndInstall();
 });

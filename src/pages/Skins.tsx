@@ -22,6 +22,7 @@ const Skins = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [modelType, setModelType] = useState<'classic' | 'slim'>('classic');
   
   // Use account skin if available, otherwise default
   const currentSkin = skinUrl || (activeAccount?.username 
@@ -87,8 +88,42 @@ const Skins = () => {
     }
   };
 
-  const handleSaveSkin = () => {
-    showToast('Скин сохранен и применен к аккаунту', 'success');
+  const handleSaveSkin = async () => {
+    if (!skinUrl) {
+        showToast('Сначала выберите скин', 'warning');
+        return;
+    }
+
+    if (!activeAccount || !activeAccount.accessToken) {
+        showToast('Требуется авторизация через Microsoft (Лицензия)', 'error');
+        return;
+    }
+
+    setLoading(true);
+    showToast('Загрузка скина на серверы Mojang...', 'info');
+
+    if (window.electron) {
+        try {
+            const result = await window.electron.ipcRenderer.invoke('upload-skin', {
+                token: activeAccount.accessToken,
+                skinData: skinUrl,
+                variant: modelType
+            });
+
+            if (result.success) {
+                showToast('Скин успешно обновлен!', 'success');
+            } else {
+                showToast(`Ошибка: ${result.error}`, 'error');
+            }
+        } catch (e) {
+            showToast('Ошибка соединения с лаунчером', 'error');
+        } finally {
+            setLoading(false);
+        }
+    } else {
+        setLoading(false);
+        showToast('Доступно только в приложении', 'warning');
+    }
   };
 
   return (
@@ -123,10 +158,18 @@ const Skins = () => {
               <div className="space-y-2">
                 <label className="text-sm text-text-secondary">Тип модели</label>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" className="text-primary border-primary bg-primary/10 hover:bg-primary/20">
+                  <Button 
+                    variant={modelType === 'classic' ? 'outline' : 'ghost'} 
+                    className={modelType === 'classic' ? 'text-primary border-primary bg-primary/10 hover:bg-primary/20' : ''}
+                    onClick={() => setModelType('classic')}
+                  >
                     Classic (4px)
                   </Button>
-                  <Button variant="ghost">
+                  <Button 
+                    variant={modelType === 'slim' ? 'outline' : 'ghost'} 
+                    className={modelType === 'slim' ? 'text-primary border-primary bg-primary/10 hover:bg-primary/20' : ''}
+                    onClick={() => setModelType('slim')}
+                  >
                     Slim (3px)
                   </Button>
                 </div>

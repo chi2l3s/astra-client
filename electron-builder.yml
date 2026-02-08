@@ -30,5 +30,5 @@ nsis:
   # installerHeader: build/header.bmp        # 150x57 px
 publish:
   provider: github
-  owner: astra-team
+  owner: chi2l3s
   repo: astra-client
