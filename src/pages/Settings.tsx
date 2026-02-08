@@ -431,7 +431,7 @@ const Settings = () => {
                      <a href="#" className="flex-1 bg-white/5 hover:bg-primary/20 hover:text-primary border border-white/5 rounded-xl py-3 text-center text-sm font-medium transition-colors">
                          Discord
                      </a>
-                     <a href="#" className="flex-1 bg-white/5 hover:bg-primary/20 hover:text-primary border border-white/5 rounded-xl py-3 text-center text-sm font-medium transition-colors">
+                     <a href="https://github.com/chi2l3s/astra-client" target='_blank' className="flex-1 bg-white/5 hover:bg-primary/20 hover:text-primary border border-white/5 rounded-xl py-3 text-center text-sm font-medium transition-colors">
                          GitHub
                      </a>
                  </div>

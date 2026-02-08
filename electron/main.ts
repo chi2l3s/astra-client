@@ -144,9 +144,24 @@ ipcMain.handle('login-microsoft', async (event) => {
        
        // Check if user actually owns the game to prevent "Demo" accounts
        // msmc 5.x check:
-       const entitlements = await msmc.McAPI.getEntitlements(token.mcToken);
-       if (!entitlements || entitlements.items.length === 0) {
-           return { error: "Аккаунт не имеет лицензии Minecraft Java Edition" };
+       try {
+         // Manual fetch to ensure compatibility
+         const entitlementsResponse = await fetch('https://api.minecraftservices.com/entitlements/mcstore', {
+            headers: {
+                'Authorization': `Bearer ${token.mcToken}`
+            }
+         });
+         
+         if (entitlementsResponse.ok) {
+             const entitlements = await entitlementsResponse.json();
+             if (!entitlements.items || entitlements.items.length === 0) {
+                 return { error: "Аккаунт не имеет лицензии Minecraft Java Edition" };
+             }
+         } else {
+             console.warn("Entitlement check returned non-200 status:", entitlementsResponse.status);
+         }
+       } catch (e) {
+          console.warn("Failed to check entitlements, proceeding anyway:", e);
        }
 
        return {

@@ -29,6 +29,7 @@ const Login = () => {
             type: 'microsoft',
             username: result.account.username,
             uuid: result.account.uuid,
+            accessToken: result.account.accessToken, // Save access token
             isActive: false,
             avatarUrl: `https://minotar.net/helm/${result.account.username}/100.png`
           };

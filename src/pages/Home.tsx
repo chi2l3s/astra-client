@@ -5,16 +5,21 @@ import { useNavigate } from 'react-router-dom';
 import { GameConsole } from '../components/ui/GameConsole';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
+import { BlurText } from '../components/ui/animations/BlurText';
+import { CountUp } from '../components/ui/animations/CountUp';
+
+import { ShinyButton } from '../components/ui/animations/ShinyButton';
 
 import { ScreenshotsWidget } from '../components/ui/ScreenshotsWidget';
 import { ServerList } from '../components/ui/ServerList';
 
 const Home = () => {
-  const { user, activeAccount, accounts, selectedVersion, installedVersions, setSelectedVersion, setActiveAccount, downloads, preferences, playStats } = useStore();
+  const { user, activeAccount, accounts, selectedVersion, installedVersions, setSelectedVersion, setActiveAccount, downloads, preferences, playStats, recordSession } = useStore();
   const navigate = useNavigate();
   const [showConsole, setShowConsole] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [startTime, setStartTime] = useState<number | null>(null);
   
   // Check if selected version is downloading
   const isDownloading = selectedVersion && downloads[selectedVersion]?.status === 'downloading';
@@ -25,6 +30,49 @@ const Home = () => {
       setSelectedVersion(installedVersions[installedVersions.length - 1].id);
     }
   }, [installedVersions, selectedVersion, setSelectedVersion]);
+
+  const [news, setNews] = useState<{tag: string, title: string, body: string, date: string}[]>([]);
+
+  useEffect(() => {
+    // Fetch latest news from a source (e.g. Minecraft RSS or GitHub Releases)
+    // For now, let's fetch GitHub Releases as an example
+    const fetchNews = async () => {
+        try {
+            const response = await fetch('https://api.github.com/repos/chi2l3s/astra-client/releases');
+            if (response.ok) {
+                const data = await response.json();
+                const latest = data.slice(0, 2).map((release: any) => ({
+                    tag: release.tag_name,
+                    title: release.name || release.tag_name,
+                    body: release.body || 'Нет описания',
+                    date: new Date(release.published_at).toLocaleDateString()
+                }));
+                setNews(latest);
+            } else {
+                // Fallback if no releases found yet or API limit
+                 setNews([
+                    {
+                        tag: 'News',
+                        title: 'Добро пожаловать в Astra Client',
+                        body: 'Лаунчер находится в активной разработке. Следите за обновлениями!',
+                        date: new Date().toLocaleDateString()
+                    }
+                 ]);
+            }
+        } catch (e) {
+             setNews([
+                    {
+                        tag: 'News',
+                        title: 'Добро пожаловать в Astra Client',
+                        body: 'Лаунчер находится в активной разработке. Следите за обновлениями!',
+                        date: new Date().toLocaleDateString()
+                    }
+             ]);
+        }
+    };
+
+    fetchNews();
+  }, []);
 
   const handleLaunch = () => {
     if (!activeAccount) {
@@ -44,10 +92,8 @@ const Home = () => {
 
     setIsRunning(true);
     setShowConsole(true);
+    setStartTime(Date.now()); // Start timer
     setLogs(['Инициализация запуска...', `Выбранная версия: ${selectedVersion}`, `Аккаунт: ${activeAccount.username}`]);
-
-
-    // Send launch command to Electron
     if (window.electron) {
       window.electron.ipcRenderer.send('launch-game', {
         version: selectedVersion,
@@ -64,6 +110,15 @@ const Home = () => {
       const removeExitListener = window.electron.ipcRenderer.on('game-exit', (code: number) => {
         setLogs(prev => [...prev, `Process exited with code ${code}`]);
         setIsRunning(false);
+        
+        // Calculate duration and save stats
+        if (startTime) {
+            const durationMs = Date.now() - startTime;
+            const durationMinutes = Math.floor(durationMs / 1000 / 60);
+            // Record even if less than a minute (as 0 or 1)
+            recordSession(durationMinutes > 0 ? durationMinutes : 1); 
+            setStartTime(null);
+        }
       });
 
       // Cleanup listeners on unmount or re-run would be ideal, 
@@ -75,6 +130,7 @@ const Home = () => {
   };
 
   const simulateLaunch = () => {
+    setStartTime(Date.now()); // Start timer for simulation too
     const steps = [
       '[INFO] Building configuration...',
       '[INFO] Checking Java environment...',
@@ -93,6 +149,18 @@ const Home = () => {
       if (i >= steps.length) {
         clearInterval(interval);
         // setIsRunning(false); // Keep running to simulate game open
+        
+        // For simulation, let's finish "game" after 5 seconds
+        setTimeout(() => {
+            setIsRunning(false);
+            if (startTime) {
+                const durationMs = Date.now() - startTime;
+                const durationMinutes = Math.floor(durationMs / 1000 / 60);
+                recordSession(durationMinutes > 0 ? durationMinutes : 1);
+                setStartTime(null);
+            }
+        }, 5000);
+
       } else {
         setLogs(prev => [...prev, steps[i]]);
         i++;
@@ -130,10 +198,19 @@ const Home = () => {
     <div className="space-y-8 relative min-h-full flex flex-col">
       <header className="flex justify-between items-end">
         <div>
-          <h1 className="text-4xl font-bold mb-2">
-            Привет, <span className="text-primary">{activeAccount?.username || 'Стив'}</span>!
-          </h1>
-          <p className="text-text-secondary">Готов покорять кубические миры?</p>
+          <div className="flex items-baseline gap-2 mb-2">
+             <BlurText 
+                text={`Привет, ${activeAccount?.username || 'Стив'}!`} 
+                className="text-4xl font-bold text-white"
+                delay={0.1}
+             />
+          </div>
+          <BlurText 
+            text="Готов покорять кубические миры?" 
+            className="text-text-secondary text-base font-normal"
+            delay={0.2}
+            duration={0.8}
+          />
         </div>
       </header>
 
@@ -144,33 +221,40 @@ const Home = () => {
             <div className="absolute top-6 left-8 right-8 flex gap-8 z-20">
                 <div>
                    <div className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Время в игре</div>
-                   <div className="text-2xl font-bold font-mono text-white">
-                      {Math.floor(playStats.totalPlayTime / 60)}<span className="text-sm text-text-secondary">ч</span> {playStats.totalPlayTime % 60}<span className="text-sm text-text-secondary">м</span>
+                   <div className="text-2xl font-bold font-mono text-white flex items-baseline gap-1">
+                      <CountUp value={Math.floor(playStats.totalPlayTime / 60)} />
+                      <span className="text-sm text-text-secondary">ч</span> 
+                      <CountUp value={playStats.totalPlayTime % 60} />
+                      <span className="text-sm text-text-secondary">м</span>
                    </div>
                 </div>
                 <div>
                    <div className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Запусков</div>
-                   <div className="text-2xl font-bold font-mono text-white">{playStats.launchCount}</div>
+                   <div className="text-2xl font-bold font-mono text-white">
+                     <CountUp value={playStats.launchCount} />
+                   </div>
                 </div>
             </div>
 
             <div className="absolute inset-0 p-8 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-black/60 z-10">
                <h2 className="text-3xl font-bold mb-2">Что нового?</h2>
                <div className="space-y-4">
-                 <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
-                    <div className="flex items-center gap-2 text-primary text-sm font-bold mb-1">
-                      <GitCommit className="w-4 h-4" />
-                      <span>Release 1.20.4</span>
+                 {news.map((item, index) => (
+                    <div key={index} className="bg-white/5 backdrop-blur-md p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2 text-primary text-sm font-bold">
+                                <GitCommit className="w-4 h-4" />
+                                <span>{item.tag}</span>
+                            </div>
+                            <span className="text-xs text-text-secondary">{item.date}</span>
+                        </div>
+                        <h3 className="text-white font-medium mb-1">{item.title}</h3>
+                        <p className="text-sm text-text-secondary line-clamp-2">{item.body}</p>
                     </div>
-                    <p className="text-sm text-text-secondary">Исправлены критические ошибки, улучшена производительность рендеринга.</p>
-                 </div>
-                 <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
-                    <div className="flex items-center gap-2 text-primary text-sm font-bold mb-1">
-                      <GitCommit className="w-4 h-4" />
-                      <span>Modrinth Integration</span>
-                    </div>
-                    <p className="text-sm text-text-secondary">Теперь вы можете устанавливать моды напрямую из лаунчера!</p>
-                 </div>
+                 ))}
+                 {news.length === 0 && (
+                     <div className="text-text-secondary">Загрузка новостей...</div>
+                 )}
                </div>
             </div>
             <img 
@@ -231,19 +315,24 @@ const Home = () => {
          </div>
 
          {/* Launch Button */}
-         <Button 
-            size="lg"
+         <ShinyButton 
             onClick={handleLaunch}
             disabled={isRunning || isDownloading || !activeAccount || !selectedVersion}
-            isLoading={isRunning || isDownloading}
             className={`
-              min-w-[240px] text-xl font-bold py-8
-              ${(!isRunning && !isDownloading) ? 'bg-gradient-to-r from-primary to-primary-hover text-white shadow-lg shadow-primary/20 hover:shadow-primary/40 border-0' : ''}
+              min-w-[240px] text-xl font-bold py-4
+              ${(!isRunning && !isDownloading) ? 'bg-gradient-to-r from-primary to-primary-hover shadow-lg shadow-primary/20 hover:shadow-primary/40 border-0' : ''}
             `}
-            leftIcon={(!isRunning && !isDownloading) ? <Play className="w-6 h-6 fill-current" /> : undefined}
           >
-            {isRunning ? 'ЗАПУСК...' : isDownloading ? 'СКАЧИВАНИЕ...' : 'ИГРАТЬ'}
-          </Button>
+            {isRunning ? (
+                <span className="flex items-center gap-2">ЗАПУСК...</span>
+            ) : isDownloading ? (
+                <span className="flex items-center gap-2">СКАЧИВАНИЕ...</span>
+            ) : (
+                <span className="flex items-center gap-2">
+                    <Play className="w-6 h-6 fill-current" /> ИГРАТЬ
+                </span>
+            )}
+          </ShinyButton>
       </div>
 
       <GameConsole 
