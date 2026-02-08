@@ -310,13 +310,24 @@ ipcMain.on('launch-game', async (event, { version, auth, memory = 4096 }) => {
   const detectedJava = findJava();
 
   // --- Auto Fabric Logic ---
-  // If there are mods, we likely need Fabric.
-  // In a real app, you'd check if the user selected "Fabric" explicitly.
-  // Here, we'll try to use Fabric if the version folder has mods, OR simply default to installing Fabric for this version.
-  
-  // Construct Fabric config
+  let fabricLoaderVersion = "0.16.10"; // Default fallback
+
+  try {
+    // Try to fetch latest compatible loader dynamically
+    const metaResponse = await fetch(`https://meta.fabricmc.net/v2/versions/loader/${version}`);
+    if (metaResponse.ok) {
+        const metaData = await metaResponse.json();
+        if (metaData && metaData.length > 0 && metaData[0].loader && metaData[0].loader.version) {
+            fabricLoaderVersion = metaData[0].loader.version;
+            win?.webContents.send('game-log', `[LAUNCHER] Resolved latest Fabric Loader: ${fabricLoaderVersion}`);
+        }
+    }
+  } catch (e) {
+    console.warn("Failed to resolve dynamic fabric version, using default", e);
+  }
+
   const fabricConfig = {
-    loader: "0.15.7", // hardcoded latest stable for now, ideally fetch dynamically
+    loader: fabricLoaderVersion,
     game: version
   };
   
