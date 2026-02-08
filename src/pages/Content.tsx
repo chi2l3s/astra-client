@@ -152,6 +152,47 @@ const Content = () => {
       });
 
       if (compatibleVersion) {
+        // --- Dependency Resolution ---
+        if (activeTab === 'mods' && compatibleVersion.dependencies && compatibleVersion.dependencies.length > 0) {
+            showToast(`Проверка зависимостей для ${project.title}...`, 'info');
+            for (const dep of compatibleVersion.dependencies) {
+                // dependency types: "required", "optional", "incompatible", "embedded"
+                if (dep.dependency_type === "required") {
+                    try {
+                        let depVersion = null;
+                        if (dep.version_id) {
+                            // If specific version is linked
+                            depVersion = await modrinthService.getVersion(dep.version_id);
+                        } else if (dep.project_id) {
+                            // Resolve latest compatible version for the dependency project
+                            const depVersions = await modrinthService.getProjectVersions(dep.project_id);
+                             depVersion = depVersions.find((v: any) => {
+                                return v.game_versions.includes(versionNumber) && v.loaders.includes('fabric');
+                            });
+                        }
+
+                        if (depVersion) {
+                            const depFile = depVersion.files.find((f: any) => f.primary) || depVersion.files[0];
+                            showToast(`Установка зависимости: ${depFile.filename}...`, 'info');
+                             if (window.electron) {
+                                window.electron.ipcRenderer.send('install-mod', {
+                                    url: depFile.url,
+                                    filename: depFile.filename,
+                                    versionId: selectedVersion,
+                                    folder: targetFolder
+                                });
+                             }
+                        } else {
+                            console.warn(`Dependency not found or incompatible: ${dep.project_id}`);
+                        }
+                    } catch (e) {
+                        console.error(`Failed to resolve dependency ${dep.project_id}`, e);
+                    }
+                }
+            }
+        }
+        // -----------------------------
+
         const file = compatibleVersion.files.find((f: any) => f.primary) || compatibleVersion.files[0];
         
         showToast(`Скачивание ${file.filename}...`, 'info');

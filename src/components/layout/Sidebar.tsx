@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useStore } from '../../store/useStore';
+import logo from '../../assets/logo.png';
 
 const navItems = [
   { icon: Home, label: 'Главная', path: '/' },
@@ -27,7 +28,7 @@ export const Sidebar: React.FC = () => {
     <div className="h-full w-20 flex flex-col items-center py-6 bg-black/20 backdrop-blur-xl border-r border-white/5 z-50">
       <div className="mb-8 relative group cursor-pointer">
         <div className="w-12 h-12 rounded-2xl overflow-hidden bg-primary/20 flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_20px_-5px_var(--color-primary)]">
-          <img src="./logo.png" alt="Logo" className="w-10 h-10 object-contain drop-shadow-md" />
+          <img src={logo} alt="Logo" className="w-10 h-10 object-contain drop-shadow-md" />
         </div>
       </div>
       

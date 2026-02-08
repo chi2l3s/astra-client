@@ -378,9 +378,9 @@ ipcMain.on('launch-game', async (event, { version, auth, memory = 4096 }) => {
       root: rootPath,
       javaPath: detectedJava,
       version: {
-        number: launchVersion.number,
+        number: version, // Always point to the vanilla version for the JAR
         type: "release",
-        custom: launchVersion.number // Critical for MCLC to pick up the custom JSON
+        ...(launchVersion.number !== version ? { custom: launchVersion.number } : {})
       },
       memory: {
         max: memory.toString(),

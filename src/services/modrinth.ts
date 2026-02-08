@@ -29,6 +29,20 @@ export const modrinthService = {
     }
   },
 
+  async getVersion(versionId: string): Promise<any> {
+      try {
+        const response = await fetch(`https://api.modrinth.com/v2/version/${versionId}`, {
+          headers: {
+            'User-Agent': 'AstraClient/1.0.0 (contact@astraclient.com)'
+          }
+        });
+        return await response.json();
+      } catch (error) {
+        console.error('Failed to fetch version:', error);
+        return null;
+      }
+  },
+
   async searchProjects(query: string = '', limit: number = 20, offset: number = 0, facets: string = ''): Promise<ModrinthProject[]> {
     try {
       const params = new URLSearchParams({
