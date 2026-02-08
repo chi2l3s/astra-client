@@ -142,6 +142,13 @@ ipcMain.handle('login-microsoft', async (event) => {
        // result is the user profile
        const profile = token.profile;
        
+       // Check if user actually owns the game to prevent "Demo" accounts
+       // msmc 5.x check:
+       const entitlements = await msmc.McAPI.getEntitlements(token.mcToken);
+       if (!entitlements || entitlements.items.length === 0) {
+           return { error: "Аккаунт не имеет лицензии Minecraft Java Edition" };
+       }
+
        return {
          success: true,
          account: {
