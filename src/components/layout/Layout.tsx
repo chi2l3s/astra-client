@@ -2,7 +2,9 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TitleBar } from './TitleBar';
+import { Background3D } from './Background3D';
 import { DownloadManager } from '../ui/DownloadManager';
+import { UpdateNotification } from '../ui/UpdateNotification';
 import { useStore } from '../../store/useStore';
 
 interface LayoutProps {
@@ -44,7 +46,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, showSidebar: explicitS
       <div className="flex-1 flex overflow-hidden">
         {showSidebar && <Sidebar />}
         <main className="flex-1 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607988795628-9eee897cb29d?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-20 pointer-events-none" />
+          <Background3D />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
           
           <div className="relative h-full overflow-y-auto p-8 custom-scrollbar">
@@ -52,6 +54,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, showSidebar: explicitS
           </div>
           
           <DownloadManager />
+          <UpdateNotification />
         </main>
       </div>
     </div>

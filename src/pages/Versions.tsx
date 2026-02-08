@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Download, Clock, CheckCircle2, Loader2 } from 'lucide-react';
+import { Search, Download, Clock, CheckCircle2, Loader2, Share2 } from 'lucide-react';
 import { minecraftService } from '../services/minecraft';
 import { MinecraftVersion } from '../types';
 import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
 import { Button } from '../components/ui/Button';
+import { useToast } from '../context/ToastContext';
 
 const Versions = () => {
   const [versions, setVersions] = useState<MinecraftVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'release' | 'snapshot'>('release');
+  const { showToast } = useToast();
   
   const { 
     installedVersions, 
@@ -19,6 +21,25 @@ const Versions = () => {
     updateDownloadProgress, 
     completeDownload 
   } = useStore();
+
+  const handleExportMods = async (versionId: string) => {
+    if (window.electron) {
+        // This is a mock since we don't have a real mod manager backend yet
+        // But we can simulate listing files in the mods folder
+        const files = await window.electron.ipcRenderer.invoke('get-installed-files', { versionId, folder: 'mods' });
+        const modNames = files.map((f: any) => f.name).join('\n');
+        
+        if (!modNames) {
+            showToast('Моды не найдены для этой версии', 'info');
+            return;
+        }
+
+        navigator.clipboard.writeText(modNames);
+        showToast('Список модов скопирован в буфер обмена!', 'success');
+    } else {
+        showToast('Функция недоступна в браузере', 'warning');
+    }
+  };
 
   useEffect(() => {
     const loadVersions = async () => {
@@ -143,9 +164,20 @@ const Versions = () => {
                         {Math.round(downloadStatus.progress)}%
                       </div>
                     ) : isInstalled ? (
-                      <div className="flex items-center gap-2 text-primary font-medium text-sm">
-                        <CheckCircle2 className="w-5 h-5" />
-                        <span className="hidden sm:inline">Установлено</span>
+                      <div className="flex items-center gap-2">
+                         <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="opacity-0 group-hover:opacity-100"
+                            onClick={() => handleExportMods(version.id)}
+                            title="Экспортировать список модов"
+                         >
+                            <Share2 className="w-4 h-4" />
+                         </Button>
+                         <div className="flex items-center gap-2 text-primary font-medium text-sm">
+                            <CheckCircle2 className="w-5 h-5" />
+                            <span className="hidden sm:inline">Установлено</span>
+                         </div>
                       </div>
                     ) : (
                       <Button 

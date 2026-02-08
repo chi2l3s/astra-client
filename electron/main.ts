@@ -2,7 +2,35 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { Client, Authenticator } from 'minecraft-launcher-core';
 import fs from 'fs';
+import { autoUpdater } from 'electron-updater';
 const msmc = require("msmc");
+const DiscordRPC = require('discord-rpc');
+
+const clientId = '1470031346473635995'; // Example ID, should be replaced with your own application ID
+let rpcClient: any;
+
+const initRPC = () => {
+  rpcClient = new DiscordRPC.Client({ transport: 'ipc' });
+  
+  rpcClient.on('ready', () => {
+    setActivity('In Launcher', 'Browsing modpacks');
+  });
+
+  rpcClient.login({ clientId }).catch(console.error);
+};
+
+const setActivity = (state: string, details: string, startTimestamp?: number) => {
+  if (!rpcClient) return;
+  
+  rpcClient.setActivity({
+    details,
+    state,
+    startTimestamp: startTimestamp || Date.now(),
+    largeImageKey: 'minecraft_icon', // Make sure you have this asset in your Discord App
+    largeImageText: 'Astra Client',
+    instance: false,
+  });
+};
 
 const launcher = new Client();
 
@@ -34,6 +62,39 @@ function createWindow() {
     win?.webContents.send('main-process-message', (new Date).toLocaleString());
   });
 
+  // Auto Updater Events
+  autoUpdater.on('checking-for-update', () => {
+    win?.webContents.send('update-status', { status: 'checking' });
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    win?.webContents.send('update-status', { status: 'available', info });
+  });
+
+  autoUpdater.on('update-not-available', (info) => {
+    win?.webContents.send('update-status', { status: 'not-available', info });
+  });
+
+  autoUpdater.on('error', (err) => {
+    win?.webContents.send('update-status', { status: 'error', error: err.toString() });
+  });
+
+  autoUpdater.on('download-progress', (progressObj) => {
+    win?.webContents.send('update-status', { 
+        status: 'progress', 
+        progress: progressObj.percent 
+    });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    win?.webContents.send('update-status', { status: 'downloaded', info });
+  });
+
+  // Check for updates once window is ready
+  if (app.isPackaged) {
+      autoUpdater.checkForUpdatesAndNotify();
+  }
+
   if (process.env.NODE_ENV === 'development') {
     win.loadURL('http://localhost:5173');
     win.webContents.openDevTools();
@@ -54,7 +115,10 @@ app.on('activate', () => {
   }
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  initRPC();
+});
 
 // IPC handlers
 ipcMain.on('window-min', () => win?.minimize());
@@ -122,6 +186,45 @@ ipcMain.handle('get-installed-files', async (event, { versionId, folder = 'mods'
     console.error('Get Installed Files Error:', error);
     return [];
   }
+});
+
+ipcMain.handle('get-screenshots', async (event, { versionId }) => {
+  if (!versionId) return [];
+
+  const screenshotsPath = path.join(app.getPath('appData'), '.astra-client', 'versions', versionId, 'screenshots');
+  
+  if (!fs.existsSync(screenshotsPath)) {
+    return [];
+  }
+
+  try {
+    const files = fs.readdirSync(screenshotsPath)
+      .filter(file => file.endsWith('.png'))
+      .map(file => {
+        const fullPath = path.join(screenshotsPath, file);
+        const stats = fs.statSync(fullPath);
+        return {
+          name: file,
+          path: fullPath,
+          date: stats.mtime,
+          // Read file as base64 for display
+          // Limit to recent 6 files to avoid memory issues with large lists
+          data: `data:image/png;base64,${fs.readFileSync(fullPath).toString('base64')}`
+        };
+      })
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 6);
+
+    return files;
+  } catch (error) {
+    console.error('Get Screenshots Error:', error);
+    return [];
+  }
+});
+
+ipcMain.on('open-file', async (event, filePath) => {
+    const { shell } = require('electron');
+    await shell.openPath(filePath);
 });
 
 ipcMain.on('delete-file', async (event, { filePath }) => {
@@ -400,6 +503,8 @@ ipcMain.on('launch-game', async (event, { version, auth, memory = 4096 }) => {
     }
 
     launcher.launch(opts);
+    
+    setActivity('Playing Minecraft', `Version ${version}`, Date.now());
 
     launcher.on('debug', (e) => win?.webContents.send('game-log', `[DEBUG] ${e}`));
     launcher.on('data', (e) => win?.webContents.send('game-log', `[GAME] ${e}`));
@@ -408,6 +513,7 @@ ipcMain.on('launch-game', async (event, { version, auth, memory = 4096 }) => {
     launcher.on('close', (e) => {
       win?.webContents.send('game-log', `[LAUNCHER] Game closed with code ${e}`);
       win?.webContents.send('game-exit', e);
+      setActivity('In Launcher', 'Resting after mining');
     });
 
   } catch (error) {
@@ -460,4 +566,8 @@ ipcMain.handle('load-theme', async () => {
     }
   }
   return { canceled: true };
+});
+
+ipcMain.on('restart-app', () => {
+    autoUpdater.quitAndInstall();
 });

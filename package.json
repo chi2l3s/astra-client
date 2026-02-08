@@ -24,6 +24,8 @@
     "@react-three/fiber": "^8.15.12",
     "@supabase/supabase-js": "^2.39.3",
     "clsx": "^2.1.1",
+    "discord-rpc": "^4.0.1",
+    "electron-updater": "^6.7.3",
     "framer-motion": "^10.16.4",
     "lucide-react": "^0.511.0",
     "minecraft-launcher-core": "^3.18.2",

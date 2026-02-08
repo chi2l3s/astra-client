@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { SkinViewer as SkinViewer3D, WalkingAnimation, IdleAnimation, RotatingAnimation } from 'skinview3d';
+import { SkinViewer as SkinViewer3D, WalkingAnimation, IdleAnimation } from 'skinview3d';
 
 interface SkinViewerProps {
   skinUrl?: string;

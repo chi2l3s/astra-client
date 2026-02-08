@@ -6,8 +6,11 @@ import { GameConsole } from '../components/ui/GameConsole';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
 
+import { ScreenshotsWidget } from '../components/ui/ScreenshotsWidget';
+import { ServerList } from '../components/ui/ServerList';
+
 const Home = () => {
-  const { user, activeAccount, accounts, selectedVersion, installedVersions, setSelectedVersion, setActiveAccount, downloads } = useStore();
+  const { user, activeAccount, accounts, selectedVersion, installedVersions, setSelectedVersion, setActiveAccount, downloads, preferences, playStats } = useStore();
   const navigate = useNavigate();
   const [showConsole, setShowConsole] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
@@ -48,7 +51,8 @@ const Home = () => {
     if (window.electron) {
       window.electron.ipcRenderer.send('launch-game', {
         version: selectedVersion,
-        auth: activeAccount
+        auth: activeAccount,
+        memory: preferences.memoryAllocation // Use from preferences
       });
 
       // Listen for logs
@@ -135,8 +139,22 @@ const Home = () => {
 
       {/* Hero Section / Content Area */}
       <div className="flex-1 grid grid-cols-3 gap-6 min-h-0">
-         <div className="col-span-2 relative rounded-3xl overflow-hidden group border border-white/5 bg-black/40">
-            <div className="absolute inset-0 p-8 flex flex-col justify-end bg-gradient-to-t from-black/80 to-transparent z-10">
+         <div className="col-span-2 relative rounded-3xl overflow-hidden group border border-white/5 bg-black/40 flex flex-col">
+            {/* Stats Overlay */}
+            <div className="absolute top-6 left-8 right-8 flex gap-8 z-20">
+                <div>
+                   <div className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Время в игре</div>
+                   <div className="text-2xl font-bold font-mono text-white">
+                      {Math.floor(playStats.totalPlayTime / 60)}<span className="text-sm text-text-secondary">ч</span> {playStats.totalPlayTime % 60}<span className="text-sm text-text-secondary">м</span>
+                   </div>
+                </div>
+                <div>
+                   <div className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Запусков</div>
+                   <div className="text-2xl font-bold font-mono text-white">{playStats.launchCount}</div>
+                </div>
+            </div>
+
+            <div className="absolute inset-0 p-8 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-black/60 z-10">
                <h2 className="text-3xl font-bold mb-2">Что нового?</h2>
                <div className="space-y-4">
                  <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
@@ -162,19 +180,14 @@ const Home = () => {
             />
          </div>
          
-         <div className="col-span-1 bg-black/20 rounded-3xl p-6 border border-white/5 flex flex-col gap-4">
-             <h3 className="font-bold text-lg">Быстрый доступ</h3>
-             <button onClick={() => navigate('/skins')} className="flex items-center gap-3 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors text-left group w-full">
-                <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                   <User className="w-5 h-5" />
-                </div>
-                <div>
-                   <div className="font-bold">Скины</div>
-                   <div className="text-xs text-text-secondary">Изменить внешний вид</div>
-                </div>
-             </button>
+         <div className="col-span-1 flex flex-col gap-6">
+             <div className="bg-black/20 rounded-3xl p-6 border border-white/5 flex flex-col gap-4 max-h-[400px]">
+                 <ServerList />
+             </div>
+
+             <ScreenshotsWidget />
          </div>
-      </div>
+       </div>
 
       {/* Bottom Bar (Launch Controls) */}
       <div className="sticky -bottom-8 bg-background-secondary/80 backdrop-blur-xl border-t border-white/10 p-6 -mx-8 -mb-8 mt-auto flex items-center justify-between gap-8 z-20">

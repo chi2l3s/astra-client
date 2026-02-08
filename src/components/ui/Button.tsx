@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useSound } from '../../hooks/useSound';
 
 interface ButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
@@ -10,11 +11,27 @@ interface ButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   children?: React.ReactNode;
+  disableSound?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', isLoading, leftIcon, rightIcon, children, disabled, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'md', isLoading, leftIcon, rightIcon, children, disabled, onClick, onMouseEnter, disableSound, ...props }, ref) => {
+    const { playClick, playHover } = useSound();
     
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!disabled && !isLoading && !disableSound) {
+        playClick();
+      }
+      onClick?.(e);
+    };
+
+    const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!disabled && !isLoading && !disableSound) {
+        playHover();
+      }
+      onMouseEnter?.(e);
+    };
+
     const variants = {
       primary: "bg-primary text-white hover:bg-primary-hover border-transparent shadow-lg shadow-primary/20",
       secondary: "bg-white/5 text-white border-white/10 hover:bg-white/10 hover:border-white/20",
@@ -36,6 +53,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         disabled={disabled || isLoading}
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
         className={cn(
           "relative inline-flex items-center justify-center font-medium transition-colors border backdrop-blur-sm select-none",
           "disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed",

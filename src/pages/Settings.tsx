@@ -51,6 +51,33 @@ const Settings = () => {
       showToast('Кэш очищен (эмуляция)', 'info');
   };
 
+  const handlePresetChange = (preset: 'potato' | 'balanced' | 'ultra') => {
+    let memory = 4096;
+    let args = '-Xmx4G -XX:+UseG1GC';
+
+    switch (preset) {
+        case 'potato':
+            memory = 2048;
+            args = '-Xmx2G -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:+UseZGC';
+            break;
+        case 'balanced':
+            memory = 4096;
+            args = '-Xmx4G -XX:+UseG1GC';
+            break;
+        case 'ultra':
+            memory = 8192;
+            args = '-Xmx8G -XX:+UseG1GC -XX:MaxGCPauseMillis=50';
+            break;
+    }
+
+    updatePreferences({
+        performancePreset: preset,
+        memoryAllocation: memory,
+        jvmArgs: args
+    });
+    showToast(`Применен пресет: ${preset}`, 'success');
+  };
+
   const handleExportTheme = async () => {
     if (window.electron) {
         const themeData = {
@@ -212,7 +239,36 @@ const Settings = () => {
                 Java и Производительность
                 </h2>
                 <div className="glass-card p-6 rounded-2xl space-y-8 border border-white/5 bg-[#121214]/50">
-                <div className="space-y-4">
+                
+                {/* Presets */}
+                <div className="grid grid-cols-3 gap-3">
+                    <button 
+                        onClick={() => handlePresetChange('potato')}
+                        className={`p-4 rounded-xl border transition-all text-center group ${preferences.performancePreset === 'potato' ? 'bg-primary/20 border-primary text-primary' : 'bg-black/20 border-white/5 hover:bg-white/5'}`}
+                    >
+                        <div className="text-2xl mb-1">🥔</div>
+                        <div className="font-bold text-sm">Potato</div>
+                        <div className="text-[10px] text-text-secondary group-hover:text-white/70">2GB RAM</div>
+                    </button>
+                    <button 
+                        onClick={() => handlePresetChange('balanced')}
+                        className={`p-4 rounded-xl border transition-all text-center group ${preferences.performancePreset === 'balanced' ? 'bg-primary/20 border-primary text-primary' : 'bg-black/20 border-white/5 hover:bg-white/5'}`}
+                    >
+                        <div className="text-2xl mb-1">⚖️</div>
+                        <div className="font-bold text-sm">Balanced</div>
+                        <div className="text-[10px] text-text-secondary group-hover:text-white/70">4GB RAM</div>
+                    </button>
+                    <button 
+                        onClick={() => handlePresetChange('ultra')}
+                        className={`p-4 rounded-xl border transition-all text-center group ${preferences.performancePreset === 'ultra' ? 'bg-primary/20 border-primary text-primary' : 'bg-black/20 border-white/5 hover:bg-white/5'}`}
+                    >
+                        <div className="text-2xl mb-1">🚀</div>
+                        <div className="font-bold text-sm">Ultra</div>
+                        <div className="text-[10px] text-text-secondary group-hover:text-white/70">8GB RAM</div>
+                    </button>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-white/5">
                     <div className="flex justify-between items-end">
                         <label className="text-sm font-medium text-text-secondary flex items-center gap-2">
                             <Monitor className="w-4 h-4" />

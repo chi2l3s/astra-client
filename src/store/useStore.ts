@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, Account, InstalledVersion, UserPreferences } from '../types';
+import { User, Account, InstalledVersion, UserPreferences, Server, PlayStats } from '../types';
 
 interface DownloadStatus {
   versionId: string;
@@ -17,6 +17,8 @@ interface AppState {
   isLoading: boolean;
   preferences: UserPreferences;
   downloads: Record<string, DownloadStatus>;
+  servers: Server[];
+  playStats: PlayStats;
   
   setUser: (user: User | null) => void;
   addAccount: (account: Account) => void;
@@ -28,6 +30,10 @@ interface AppState {
   startDownload: (versionId: string) => void;
   updateDownloadProgress: (versionId: string, progress: number) => void;
   completeDownload: (versionId: string) => void;
+  
+  addServer: (server: Server) => void;
+  removeServer: (serverId: string) => void;
+  recordSession: (duration: number) => void; // duration in minutes
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -38,7 +44,15 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   windowWidth: 1280,
   windowHeight: 720,
   fullscreen: false,
-  closeLauncherAfterStart: false
+  closeLauncherAfterStart: false,
+  performancePreset: 'balanced'
+};
+
+const DEFAULT_STATS: PlayStats = {
+  totalPlayTime: 0,
+  launchCount: 0,
+  lastSessionDuration: 0,
+  lastPlayedDate: new Date().toISOString()
 };
 
 export const useStore = create<AppState>()(
@@ -52,6 +66,8 @@ export const useStore = create<AppState>()(
       isLoading: false,
       preferences: DEFAULT_PREFERENCES,
       downloads: {},
+      servers: [],
+      playStats: DEFAULT_STATS,
 
       setUser: (user) => set({ user }),
       addAccount: (account) => set((state) => ({ accounts: [...state.accounts, account] })),
@@ -97,8 +113,7 @@ export const useStore = create<AppState>()(
             newInstalled = [...state.installedVersions, { 
               id: versionId, 
               type: 'release', 
-              releaseTime: new Date().toISOString(), 
-              url: '' 
+              installDate: new Date().toISOString(), 
             }];
           }
 
@@ -111,7 +126,19 @@ export const useStore = create<AppState>()(
             downloads: newDownloads
           };
         });
-      }
+      },
+
+      addServer: (server) => set((state) => ({ servers: [...state.servers, server] })),
+      removeServer: (serverId) => set((state) => ({ servers: state.servers.filter(s => s.id !== serverId) })),
+      
+      recordSession: (duration) => set((state) => ({
+        playStats: {
+          totalPlayTime: state.playStats.totalPlayTime + duration,
+          launchCount: state.playStats.launchCount + 1,
+          lastSessionDuration: duration,
+          lastPlayedDate: new Date().toISOString()
+        }
+      }))
     }),
     {
       name: 'astra-storage', // unique name
@@ -120,7 +147,9 @@ export const useStore = create<AppState>()(
         activeAccount: state.activeAccount,
         preferences: state.preferences,
         installedVersions: state.installedVersions,
-        selectedVersion: state.selectedVersion
+        selectedVersion: state.selectedVersion,
+        servers: state.servers,
+        playStats: state.playStats
       }), // only persist these fields
     }
   )

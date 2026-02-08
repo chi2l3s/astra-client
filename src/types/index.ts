@@ -15,6 +15,22 @@ export interface UserPreferences {
   windowHeight: number;
   fullscreen: boolean;
   closeLauncherAfterStart: boolean;
+  performancePreset: 'potato' | 'balanced' | 'ultra' | 'custom';
+}
+
+export interface Server {
+  id: string;
+  name: string;
+  ip: string;
+  icon?: string;
+  lastPlayed?: string;
+}
+
+export interface PlayStats {
+  totalPlayTime: number; // in minutes
+  launchCount: number;
+  lastSessionDuration: number; // in minutes
+  lastPlayedDate: string;
 }
 
 export interface Account {
