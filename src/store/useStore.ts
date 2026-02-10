@@ -19,7 +19,7 @@ interface AppState {
   downloads: Record<string, DownloadStatus>;
   servers: Server[];
   playStats: PlayStats;
-  
+
   setUser: (user: User | null) => void;
   addAccount: (account: Account) => void;
   removeAccount: (accountId: string) => void;
@@ -30,10 +30,10 @@ interface AppState {
   startDownload: (versionId: string) => void;
   updateDownloadProgress: (versionId: string, progress: number) => void;
   completeDownload: (versionId: string) => void;
-  
+
   addServer: (server: Server) => void;
   removeServer: (serverId: string) => void;
-  recordSession: (duration: number) => void; // duration in minutes
+  recordSession: (duration: number) => void;
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -45,14 +45,24 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   windowHeight: 720,
   fullscreen: false,
   closeLauncherAfterStart: false,
-  performancePreset: 'balanced'
+  performancePreset: 'balanced',
+  language: 'ru',
+  autoUpdates: true,
+  updateChannel: 'stable',
+  startOnBoot: false,
+  minimizeToTray: true,
+  reduceMotion: false,
+  enableSounds: true,
+  showNews: true,
+  telemetry: false,
+  crashReports: true,
 };
 
 const DEFAULT_STATS: PlayStats = {
   totalPlayTime: 0,
   launchCount: 0,
   lastSessionDuration: 0,
-  lastPlayedDate: new Date().toISOString()
+  lastPlayedDate: new Date().toISOString(),
 };
 
 export const useStore = create<AppState>()(
@@ -71,77 +81,84 @@ export const useStore = create<AppState>()(
 
       setUser: (user) => set({ user }),
       addAccount: (account) => set((state) => ({ accounts: [...state.accounts, account] })),
-      removeAccount: (accountId) => set((state) => ({ 
-        accounts: state.accounts.filter(a => a.id !== accountId),
-        activeAccount: state.activeAccount?.id === accountId ? null : state.activeAccount
-      })),
-      setActiveAccount: (accountId) => set((state) => ({ 
-        activeAccount: state.accounts.find(a => a.id === accountId) || null,
-        accounts: state.accounts.map(a => ({
-          ...a,
-          isActive: a.id === accountId
-        }))
-      })),
+      removeAccount: (accountId) =>
+        set((state) => ({
+          accounts: state.accounts.filter((a) => a.id !== accountId),
+          activeAccount: state.activeAccount?.id === accountId ? null : state.activeAccount,
+        })),
+      setActiveAccount: (accountId) =>
+        set((state) => ({
+          activeAccount: state.accounts.find((a) => a.id === accountId) || null,
+          accounts: state.accounts.map((a) => ({
+            ...a,
+            isActive: a.id === accountId,
+          })),
+        })),
       setLoading: (loading) => set({ isLoading: loading }),
       setSelectedVersion: (versionId) => set({ selectedVersion: versionId }),
-      
-      updatePreferences: (prefs) => set((state) => ({
-        preferences: { ...state.preferences, ...prefs }
-      })),
 
-      startDownload: (versionId) => set((state) => ({
-        downloads: {
-          ...state.downloads,
-          [versionId]: { versionId, progress: 0, status: 'downloading' }
-        }
-      })),
+      updatePreferences: (prefs) =>
+        set((state) => ({
+          preferences: { ...state.preferences, ...prefs },
+        })),
 
-      updateDownloadProgress: (versionId, progress) => set((state) => ({
-        downloads: {
-          ...state.downloads,
-          [versionId]: { ...state.downloads[versionId], progress }
-        }
-      })),
+      startDownload: (versionId) =>
+        set((state) => ({
+          downloads: {
+            ...state.downloads,
+            [versionId]: { versionId, progress: 0, status: 'downloading' },
+          },
+        })),
+
+      updateDownloadProgress: (versionId, progress) =>
+        set((state) => ({
+          downloads: {
+            ...state.downloads,
+            [versionId]: { ...state.downloads[versionId], progress },
+          },
+        })),
 
       completeDownload: (versionId) => {
         set((state) => {
-          // Add to installed versions if not exists
-          const isInstalled = state.installedVersions.some(v => v.id === versionId);
+          const isInstalled = state.installedVersions.some((v) => v.id === versionId);
           let newInstalled = state.installedVersions;
-          
+
           if (!isInstalled) {
-            newInstalled = [...state.installedVersions, { 
-              id: versionId, 
-              type: 'release', 
-              installDate: new Date().toISOString(), 
-            }];
+            newInstalled = [
+              ...state.installedVersions,
+              {
+                id: versionId,
+                type: 'release',
+                installDate: new Date().toISOString(),
+              },
+            ];
           }
 
-          // Remove from downloads
           const newDownloads = { ...state.downloads };
           delete newDownloads[versionId];
 
           return {
             installedVersions: newInstalled,
-            downloads: newDownloads
+            downloads: newDownloads,
           };
         });
       },
 
       addServer: (server) => set((state) => ({ servers: [...state.servers, server] })),
-      removeServer: (serverId) => set((state) => ({ servers: state.servers.filter(s => s.id !== serverId) })),
-      
-      recordSession: (duration) => set((state) => ({
-        playStats: {
-          totalPlayTime: state.playStats.totalPlayTime + duration,
-          launchCount: state.playStats.launchCount + 1,
-          lastSessionDuration: duration,
-          lastPlayedDate: new Date().toISOString()
-        }
-      }))
+      removeServer: (serverId) => set((state) => ({ servers: state.servers.filter((s) => s.id !== serverId) })),
+
+      recordSession: (duration) =>
+        set((state) => ({
+          playStats: {
+            totalPlayTime: state.playStats.totalPlayTime + duration,
+            launchCount: state.playStats.launchCount + 1,
+            lastSessionDuration: duration,
+            lastPlayedDate: new Date().toISOString(),
+          },
+        })),
     }),
     {
-      name: 'astra-storage', // unique name
+      name: 'astra-storage',
       partialize: (state) => ({
         accounts: state.accounts,
         activeAccount: state.activeAccount,
@@ -149,8 +166,8 @@ export const useStore = create<AppState>()(
         installedVersions: state.installedVersions,
         selectedVersion: state.selectedVersion,
         servers: state.servers,
-        playStats: state.playStats
-      }), // only persist these fields
+        playStats: state.playStats,
+      }),
     }
   )
 );

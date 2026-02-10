@@ -16,6 +16,16 @@ export interface UserPreferences {
   fullscreen: boolean;
   closeLauncherAfterStart: boolean;
   performancePreset: 'potato' | 'balanced' | 'ultra' | 'custom';
+  language: 'ru' | 'en';
+  autoUpdates: boolean;
+  updateChannel: 'stable' | 'beta';
+  startOnBoot: boolean;
+  minimizeToTray: boolean;
+  reduceMotion: boolean;
+  enableSounds: boolean;
+  showNews: boolean;
+  telemetry: boolean;
+  crashReports: boolean;
 }
 
 export interface Server {
@@ -27,9 +37,9 @@ export interface Server {
 }
 
 export interface PlayStats {
-  totalPlayTime: number; // in minutes
+  totalPlayTime: number;
   launchCount: number;
-  lastSessionDuration: number; // in minutes
+  lastSessionDuration: number;
   lastPlayedDate: string;
 }
 
@@ -40,7 +50,6 @@ export interface Account {
   uuid: string;
   avatarUrl?: string;
   isActive: boolean;
-  accessToken?: string;
 }
 
 export interface MinecraftVersion {

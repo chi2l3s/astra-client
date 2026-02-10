@@ -12,10 +12,9 @@ export const minecraftService = {
         type: v.type,
         url: v.url,
         time: v.time,
-        releaseTime: v.releaseTime
+        releaseTime: v.releaseTime,
       }));
-    } catch (error) {
-      console.error('Failed to fetch minecraft versions', error);
+    } catch {
       return [];
     }
   },
@@ -24,9 +23,8 @@ export const minecraftService = {
     try {
       const response = await fetch(url);
       return await response.json();
-    } catch (error) {
-      console.error('Failed to fetch version details', error);
+    } catch {
       return null;
     }
-  }
+  },
 };

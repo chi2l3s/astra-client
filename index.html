@@ -2,19 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:5173; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' http://localhost:5173 https://launchermeta.mojang.com https://piston-meta.mojang.com https://authserver.mojang.com https://api.minecraftservices.com https://textures.minecraft.net https://minotar.net https://*.supabase.co https://api.modrinth.com;">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:5173; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' http://localhost:5173 https://launchermeta.mojang.com https://piston-meta.mojang.com https://authserver.mojang.com https://api.minecraftservices.com https://textures.minecraft.net https://minotar.net https://*.supabase.co https://api.modrinth.com https://raw.githack.com https://github.com https://raw.githubusercontent.com https://api.github.com https://api.mcsrvstat.us;"
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Astra Client</title>
     <script type="module">
       if (import.meta.hot?.on) {
-        import.meta.hot.on('vite:error', (error) => {
+        import.meta.hot.on("vite:error", (error) => {
           if (error.err) {
             console.error(
-              [error.err.message, error.err.frame].filter(Boolean).join('\n'),
-            )
+              [error.err.message, error.err.frame].filter(Boolean).join("\n"),
+            );
           }
-        })
+        });
       }
     </script>
   </head>

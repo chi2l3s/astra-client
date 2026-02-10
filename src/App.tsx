@@ -2,6 +2,7 @@ import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { ThemeManager } from './components/layout/ThemeManager';
+import { PreferencesBridge } from './components/layout/PreferencesBridge';
 import { ToastProvider } from './context/ToastContext';
 import Home from './pages/Home';
 import Versions from './pages/Versions';
@@ -15,6 +16,7 @@ const App: React.FC = () => {
     <ToastProvider>
       <HashRouter>
         <ThemeManager />
+        <PreferencesBridge />
         <Layout>
           <Routes>
             <Route path="/" element={<Home />} />

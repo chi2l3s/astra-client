@@ -1,57 +1,47 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { User, Shield, ArrowRight, Loader2, Gamepad2 } from 'lucide-react';
+import { User, ArrowRight, Gamepad2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useToast } from '../context/ToastContext';
 import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 import { Account } from '../types';
 
 const Login = () => {
   const navigate = useNavigate();
   const { addAccount, setActiveAccount } = useStore();
   const { showToast } = useToast();
-  
+
   const [mode, setMode] = useState<'select' | 'offline'>('select');
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleMicrosoftLogin = async () => {
     setIsLoading(true);
-    
+
     try {
-      if (window.electron) {
-        const result = await window.electron.ipcRenderer.invoke('login-microsoft');
-        
+      if (window.astra) {
+        const result = await window.astra.auth.loginMicrosoft();
         if (result.success) {
-          const newAccount: Account = {
-            id: crypto.randomUUID(),
-            type: 'microsoft',
-            username: result.account.username,
-            uuid: result.account.uuid,
-            accessToken: result.account.accessToken, // Save access token
-            isActive: false,
-            avatarUrl: `https://minotar.net/helm/${result.account.username}/100.png`
-          };
-          
+          const newAccount: Account = { ...result.account };
           addAccount(newAccount);
           setActiveAccount(newAccount.id);
           showToast(`Добро пожаловать, ${result.account.username}!`, 'success');
           navigate('/');
         } else {
-          showToast('Ошибка входа через Microsoft', 'error');
+          showToast(result.error || 'Ошибка входа через Microsoft', 'error');
         }
       } else {
-        // Fallback for browser dev mode (mock login)
         setTimeout(() => {
-          const mockName = "DevUser_" + Math.floor(Math.random() * 1000);
-           const newAccount: Account = {
+          const mockName = 'DevUser_' + Math.floor(Math.random() * 1000);
+          const newAccount: Account = {
             id: crypto.randomUUID(),
             type: 'microsoft',
             username: mockName,
             uuid: crypto.randomUUID(),
             isActive: false,
-            avatarUrl: `https://minotar.net/helm/${mockName}/100.png`
+            avatarUrl: `https://minotar.net/helm/${mockName}/100.png`,
           };
           addAccount(newAccount);
           setActiveAccount(newAccount.id);
@@ -59,8 +49,7 @@ const Login = () => {
           navigate('/');
         }, 1000);
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
       showToast('Произошла ошибка при входе', 'error');
     } finally {
       setIsLoading(false);
@@ -72,8 +61,7 @@ const Login = () => {
     if (!username.trim()) return;
 
     setIsLoading(true);
-    
-    // Simulate a small delay for better UX
+
     setTimeout(() => {
       const newAccount: Account = {
         id: crypto.randomUUID(),
@@ -81,7 +69,7 @@ const Login = () => {
         username: username,
         uuid: crypto.randomUUID(),
         isActive: false,
-        avatarUrl: `https://minotar.net/helm/${username}/100.png`
+        avatarUrl: `https://minotar.net/helm/${username}/100.png`,
       };
 
       addAccount(newAccount);
@@ -100,7 +88,6 @@ const Login = () => {
           animate={{ opacity: 1, y: 0 }}
           className="glass-card rounded-3xl p-8 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden"
         >
-          {/* Decorative background elements */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
             <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary/20 rounded-full blur-3xl" />
             <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
@@ -110,12 +97,8 @@ const Login = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-purple-600 shadow-lg shadow-primary/30 mb-4">
               <Gamepad2 className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
-              Astra Client
-            </h1>
-            <p className="text-text-secondary mt-2 text-sm">
-              Войдите, чтобы начать игру
-            </p>
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">Astra Client</h1>
+            <p className="text-text-secondary mt-2 text-sm">Войдите, чтобы начать игру</p>
           </div>
 
           <AnimatePresence mode="wait">
@@ -180,28 +163,19 @@ const Login = () => {
                 className="space-y-6"
               >
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-text-secondary ml-1">Никнейм</label>
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Введите никнейм"
-                      className="w-full bg-black/20 border border-white/10 rounded-xl px-12 py-3 text-white placeholder-text-secondary focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                      autoFocus
-                    />
-                  </div>
+                  <Input
+                    label="Никнейм"
+                    leftIcon={<User className="w-5 h-5 text-text-secondary" />}
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Введите никнейм"
+                    autoFocus
+                  />
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setMode('select')}
-                    className="flex-1"
-                    disabled={isLoading}
-                  >
+                  <Button type="button" variant="ghost" onClick={() => setMode('select')} className="flex-1" disabled={isLoading}>
                     Назад
                   </Button>
                   <Button
@@ -218,10 +192,8 @@ const Login = () => {
             )}
           </AnimatePresence>
         </motion.div>
-        
-        <p className="text-center text-xs text-text-secondary mt-8 opacity-50">
-          Astra Client v1.0.0
-        </p>
+
+        <p className="text-center text-xs text-text-secondary mt-8 opacity-50">Astra Client v1.0.0</p>
       </div>
     </div>
   );

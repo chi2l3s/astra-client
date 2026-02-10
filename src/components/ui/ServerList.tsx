@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Wifi, Trash2, Plus, Play } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { Button } from './Button';
-import { cn } from '../../lib/utils';
+import { Input } from './Input';
 
 interface ServerItemProps {
   server: { id: string, name: string, ip: string };
@@ -83,8 +83,6 @@ export const ServerList = () => {
   };
 
   const handleJoin = (ip: string) => {
-    // This would need to be passed to the launch args
-    // For now we just alert
     alert(`Quick join to ${ip} will be available in next update!`);
   };
 
@@ -99,16 +97,17 @@ export const ServerList = () => {
 
        {isAdding && (
           <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2">
-             <input 
+             <Input
                placeholder="Название (опционально)"
-               className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50"
+               className="text-sm"
                value={newServerName}
                onChange={e => setNewServerName(e.target.value)}
              />
              <div className="flex gap-2">
-                <input 
+                <Input
                   placeholder="IP Адрес"
-                  className="flex-1 bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50"
+                  className="text-sm"
+                  containerClassName="flex-1"
                   value={newServerIp}
                   onChange={e => setNewServerIp(e.target.value)}
                 />

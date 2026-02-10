@@ -15,7 +15,7 @@ node_modules
 release
 dist
 build
-.env.*
+.env
 *.local
 
 # Editor directories and files

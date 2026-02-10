@@ -5,11 +5,10 @@ import * as THREE from 'three';
 
 const FloatingCube = ({ position, rotation, scale, color }: any) => {
   const mesh = useRef<THREE.Mesh>(null!);
-  
+
   useFrame((state, delta) => {
     mesh.current.rotation.x += delta * 0.1;
     mesh.current.rotation.y += delta * 0.15;
-    // Floating effect
     mesh.current.position.y += Math.sin(state.clock.elapsedTime + position[0]) * 0.002;
   });
 
@@ -30,14 +29,10 @@ const Scene = () => {
     const items = [];
     for (let i = 0; i < 20; i++) {
       items.push({
-        position: [
-          (Math.random() - 0.5) * 20,
-          (Math.random() - 0.5) * 10,
-          (Math.random() - 0.5) * 10 - 5
-        ],
+        position: [(Math.random() - 0.5) * 20, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10 - 5],
         rotation: [Math.random() * Math.PI, Math.random() * Math.PI, 0],
         scale: Math.random() * 1 + 0.5,
-        color: i % 2 === 0 ? '#6366f1' : '#8b5cf6' // Primary and accent colors
+        color: i % 2 === 0 ? '#6366f1' : '#8b5cf6',
       });
     }
     return items;

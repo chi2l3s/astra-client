@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TitleBar } from './TitleBar';
@@ -15,14 +15,13 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children, showSidebar: explicitShowSidebar }) => {
   const { updateDownloadProgress, completeDownload } = useStore();
   const location = useLocation();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
-  const showSidebar = explicitShowSidebar !== undefined 
-    ? explicitShowSidebar 
-    : location.pathname !== '/login';
+  const showSidebar = explicitShowSidebar !== undefined ? explicitShowSidebar : location.pathname !== '/login';
 
   useEffect(() => {
-    if (window.electron) {
-      const handleProgress = (data: { version: string, progress: number }) => {
+    if (window.astra) {
+      const handleProgress = (data: { version: string; progress: number }) => {
         updateDownloadProgress(data.version, data.progress);
       };
 
@@ -30,8 +29,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, showSidebar: explicitS
         completeDownload(data.version);
       };
 
-      const removeProgress = window.electron.ipcRenderer.on('install-progress', handleProgress);
-      const removeComplete = window.electron.ipcRenderer.on('install-complete', handleComplete);
+      const removeProgress = window.astra.game.onInstallProgress(handleProgress);
+      const removeComplete = window.astra.game.onInstallComplete(handleComplete);
 
       return () => {
         removeProgress();
@@ -44,15 +43,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, showSidebar: explicitS
     <div className="flex flex-col h-screen w-full bg-background overflow-hidden text-text-primary">
       <TitleBar />
       <div className="flex-1 flex overflow-hidden">
-        {showSidebar && <Sidebar />}
+        {showSidebar && <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((v) => !v)} />}
         <main className="flex-1 relative overflow-hidden">
           <Background3D />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
-          
-          <div className="relative h-full overflow-y-auto p-8 custom-scrollbar">
-             {children}
+
+          <div className="relative h-full overflow-y-auto px-8 pt-8 pb-0 custom-scrollbar">
+            <div className="pb-8">{children}</div>
           </div>
-          
+
           <DownloadManager />
           <UpdateNotification />
         </main>

@@ -29,29 +29,21 @@ export const GameConsole: React.FC<GameConsoleProps> = ({ isOpen, onClose, logs 
             isExpanded ? 'h-[80vh]' : 'h-64'
           }`}
         >
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-2 bg-black/20 border-b border-white/5">
             <div className="flex items-center gap-2 text-text-secondary">
               <Terminal className="w-4 h-4" />
               <span className="text-sm font-medium">Консоль игры</span>
             </div>
             <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="p-1 hover:text-white text-text-secondary transition-colors"
-              >
+              <button onClick={() => setIsExpanded(!isExpanded)} className="p-1 hover:text-white text-text-secondary transition-colors">
                 {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
               </button>
-              <button 
-                onClick={onClose}
-                className="p-1 hover:text-red-500 text-text-secondary transition-colors"
-              >
+              <button onClick={onClose} className="p-1 hover:text-red-500 text-text-secondary transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Logs */}
           <div className="h-full overflow-y-auto p-4 font-mono text-xs custom-scrollbar pb-12 bg-[#0d0d0d]">
             {logs.length === 0 ? (
               <div className="text-text-secondary opacity-50 italic">Ожидание запуска игры...</div>
@@ -59,12 +51,17 @@ export const GameConsole: React.FC<GameConsoleProps> = ({ isOpen, onClose, logs 
               logs.map((log, index) => (
                 <div key={index} className="mb-1 break-words">
                   <span className="text-gray-500">[{new Date().toLocaleTimeString()}] </span>
-                  <span className={
-                    log.includes('ERROR') ? 'text-red-400' :
-                    log.includes('WARN') ? 'text-yellow-400' :
-                    log.includes('INFO') ? 'text-blue-400' :
-                    'text-gray-300'
-                  }>
+                  <span
+                    className={
+                      log.includes('ERROR')
+                        ? 'text-red-400'
+                        : log.includes('WARN')
+                        ? 'text-yellow-400'
+                        : log.includes('INFO')
+                        ? 'text-blue-400'
+                        : 'text-gray-300'
+                    }
+                  >
                     {log}
                   </span>
                 </div>

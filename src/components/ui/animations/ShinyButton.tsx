@@ -18,8 +18,6 @@ export const ShinyButton = ({ children, onClick, className, disabled }: ShinyBut
       <span className="relative z-10 flex items-center justify-center gap-2">
         {children}
       </span>
-      
-      {/* Shine effect */}
       <motion.div
         initial={{ x: '-100%' }}
         animate={{ x: '100%' }}

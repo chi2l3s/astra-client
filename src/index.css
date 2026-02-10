@@ -10,9 +10,37 @@
     --color-primary-hover: 5 150 105;
     --color-text-primary: 249 250 251;
     --color-text-secondary: 156 163 175;
+    --color-foreground: 249 250 251;
+    --color-primary-foreground: 255 255 255;
+    --color-card: 28 28 30;
+    --color-card-foreground: 249 250 251;
+    --color-popover: 28 28 30;
+    --color-popover-foreground: 249 250 251;
+    --color-secondary: 28 28 30;
+    --color-secondary-foreground: 249 250 251;
+    --color-muted: 28 28 30;
+    --color-muted-foreground: 156 163 175;
+    --color-accent: 16 185 129;
+    --color-accent-foreground: 255 255 255;
+    --color-destructive: 239 68 68;
+    --color-destructive-foreground: 255 255 255;
+    --color-border: 255 255 255;
+    --color-input: 255 255 255;
+    --color-ring: 16 185 129;
+    --color-chart-1: 16 185 129;
+    --color-chart-2: 59 130 246;
+    --color-chart-3: 234 88 12;
+    --color-chart-4: 147 51 234;
+    --color-chart-5: 239 68 68;
+    --color-brand-solid: 16 185 129;
+    --color-quaternary: 255 255 255;
+    --color-slider-handle-bg: 255 255 255;
+    --color-slider-handle-border: 255 255 255;
+    --color-secondary-alt: 255 255 255;
+    --color-focus-ring: 16 185 129;
+    --radius: 12px;
   }
 
-  /* Themes */
   :root[data-theme="light"] {
     --color-background: 240 240 245;
     --color-background-secondary: 255 255 255;
@@ -20,6 +48,28 @@
     --color-primary-hover: 5 150 105;
     --color-text-primary: 17 24 39;
     --color-text-secondary: 75 85 99;
+    --color-foreground: 17 24 39;
+    --color-primary-foreground: 255 255 255;
+    --color-card: 255 255 255;
+    --color-card-foreground: 17 24 39;
+    --color-popover: 255 255 255;
+    --color-popover-foreground: 17 24 39;
+    --color-secondary: 255 255 255;
+    --color-secondary-foreground: 17 24 39;
+    --color-muted: 240 240 245;
+    --color-muted-foreground: 75 85 99;
+    --color-accent: 16 185 129;
+    --color-accent-foreground: 255 255 255;
+    --color-destructive: 239 68 68;
+    --color-destructive-foreground: 255 255 255;
+    --color-border: 17 24 39;
+    --color-input: 17 24 39;
+    --color-ring: 16 185 129;
+    --color-chart-1: 16 185 129;
+    --color-chart-2: 59 130 246;
+    --color-chart-3: 234 88 12;
+    --color-chart-4: 147 51 234;
+    --color-chart-5: 239 68 68;
   }
 
   :root[data-theme="green"] {
@@ -29,6 +79,28 @@
     --color-primary-hover: 34 197 94;
     --color-text-primary: 240 253 244;
     --color-text-secondary: 187 247 208;
+    --color-foreground: 240 253 244;
+    --color-primary-foreground: 15 25 15;
+    --color-card: 25 40 25;
+    --color-card-foreground: 240 253 244;
+    --color-popover: 25 40 25;
+    --color-popover-foreground: 240 253 244;
+    --color-secondary: 25 40 25;
+    --color-secondary-foreground: 240 253 244;
+    --color-muted: 25 40 25;
+    --color-muted-foreground: 187 247 208;
+    --color-accent: 74 222 128;
+    --color-accent-foreground: 15 25 15;
+    --color-destructive: 239 68 68;
+    --color-destructive-foreground: 255 255 255;
+    --color-border: 187 247 208;
+    --color-input: 187 247 208;
+    --color-ring: 74 222 128;
+    --color-chart-1: 74 222 128;
+    --color-chart-2: 34 197 94;
+    --color-chart-3: 59 130 246;
+    --color-chart-4: 147 51 234;
+    --color-chart-5: 239 68 68;
   }
 
   :root[data-theme="red"] {
@@ -38,6 +110,28 @@
     --color-primary-hover: 220 38 38;
     --color-text-primary: 254 242 242;
     --color-text-secondary: 252 165 165;
+    --color-foreground: 254 242 242;
+    --color-primary-foreground: 25 10 10;
+    --color-card: 45 20 20;
+    --color-card-foreground: 254 242 242;
+    --color-popover: 45 20 20;
+    --color-popover-foreground: 254 242 242;
+    --color-secondary: 45 20 20;
+    --color-secondary-foreground: 254 242 242;
+    --color-muted: 45 20 20;
+    --color-muted-foreground: 252 165 165;
+    --color-accent: 239 68 68;
+    --color-accent-foreground: 25 10 10;
+    --color-destructive: 239 68 68;
+    --color-destructive-foreground: 255 255 255;
+    --color-border: 252 165 165;
+    --color-input: 252 165 165;
+    --color-ring: 239 68 68;
+    --color-chart-1: 239 68 68;
+    --color-chart-2: 234 88 12;
+    --color-chart-3: 59 130 246;
+    --color-chart-4: 147 51 234;
+    --color-chart-5: 16 185 129;
   }
 
   :root[data-theme="blue"] {
@@ -47,6 +141,28 @@
     --color-primary-hover: 37 99 235;
     --color-text-primary: 239 246 255;
     --color-text-secondary: 191 219 254;
+    --color-foreground: 239 246 255;
+    --color-primary-foreground: 10 15 25;
+    --color-card: 20 25 40;
+    --color-card-foreground: 239 246 255;
+    --color-popover: 20 25 40;
+    --color-popover-foreground: 239 246 255;
+    --color-secondary: 20 25 40;
+    --color-secondary-foreground: 239 246 255;
+    --color-muted: 20 25 40;
+    --color-muted-foreground: 191 219 254;
+    --color-accent: 59 130 246;
+    --color-accent-foreground: 10 15 25;
+    --color-destructive: 239 68 68;
+    --color-destructive-foreground: 255 255 255;
+    --color-border: 191 219 254;
+    --color-input: 191 219 254;
+    --color-ring: 59 130 246;
+    --color-chart-1: 59 130 246;
+    --color-chart-2: 16 185 129;
+    --color-chart-3: 234 88 12;
+    --color-chart-4: 147 51 234;
+    --color-chart-5: 239 68 68;
   }
 
   :root[data-theme="purple"] {
@@ -56,6 +172,28 @@
     --color-primary-hover: 126 34 206;
     --color-text-primary: 250 245 255;
     --color-text-secondary: 233 213 255;
+    --color-foreground: 250 245 255;
+    --color-primary-foreground: 15 10 25;
+    --color-card: 25 20 40;
+    --color-card-foreground: 250 245 255;
+    --color-popover: 25 20 40;
+    --color-popover-foreground: 250 245 255;
+    --color-secondary: 25 20 40;
+    --color-secondary-foreground: 250 245 255;
+    --color-muted: 25 20 40;
+    --color-muted-foreground: 233 213 255;
+    --color-accent: 147 51 234;
+    --color-accent-foreground: 15 10 25;
+    --color-destructive: 239 68 68;
+    --color-destructive-foreground: 255 255 255;
+    --color-border: 233 213 255;
+    --color-input: 233 213 255;
+    --color-ring: 147 51 234;
+    --color-chart-1: 147 51 234;
+    --color-chart-2: 59 130 246;
+    --color-chart-3: 16 185 129;
+    --color-chart-4: 234 88 12;
+    --color-chart-5: 239 68 68;
   }
 
   :root[data-theme="orange"] {
@@ -65,11 +203,80 @@
     --color-primary-hover: 234 88 12;
     --color-text-primary: 255 247 237;
     --color-text-secondary: 254 215 170;
+    --color-foreground: 255 247 237;
+    --color-primary-foreground: 25 15 10;
+    --color-card: 40 25 20;
+    --color-card-foreground: 255 247 237;
+    --color-popover: 40 25 20;
+    --color-popover-foreground: 255 247 237;
+    --color-secondary: 40 25 20;
+    --color-secondary-foreground: 255 247 237;
+    --color-muted: 40 25 20;
+    --color-muted-foreground: 254 215 170;
+    --color-accent: 249 115 22;
+    --color-accent-foreground: 25 15 10;
+    --color-destructive: 239 68 68;
+    --color-destructive-foreground: 255 255 255;
+    --color-border: 254 215 170;
+    --color-input: 254 215 170;
+    --color-ring: 249 115 22;
+    --color-chart-1: 249 115 22;
+    --color-chart-2: 239 68 68;
+    --color-chart-3: 59 130 246;
+    --color-chart-4: 147 51 234;
+    --color-chart-5: 16 185 129;
   }
 
   body {
     @apply bg-background text-text-primary antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  button {
+    @apply rounded-xl;
+  }
+
+  :root[data-reduce-motion="true"] * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: rgb(var(--color-background-secondary) / 0.6);
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: rgb(var(--color-primary));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    border: 2px solid rgba(255, 255, 255, 0.7);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: rgb(var(--color-primary));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    border: 2px solid rgba(255, 255, 255, 0.7);
+  }
+
+  input[type="range"]::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: rgb(var(--color-background-secondary) / 0.6);
   }
 }
 

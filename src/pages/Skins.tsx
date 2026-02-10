@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Upload, Save, Shirt, Download, User, Search, Loader2, Check } from 'lucide-react';
+import { Upload, Save, Shirt, Download, Search, Loader2, Check } from 'lucide-react';
 import { SkinViewer } from '../components/ui/SkinViewer';
 import { useStore } from '../store/useStore';
 import { useToast } from '../context/ToastContext';
-import { Skeleton } from '../components/ui/Skeleton';
 import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 
-// Predefined skin library
 const SKIN_LIBRARY = [
   { id: 'steve', name: 'Steve', url: 'https://textures.minecraft.net/texture/31f477eb1a7b83f53c852ebe45056fb491626f55567303310023d537a85d2' },
   { id: 'alex', name: 'Alex', url: 'https://textures.minecraft.net/texture/c66002012891d4e414c251480072793e1763787f707337915351390435c523' },
@@ -23,11 +22,8 @@ const Skins = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [modelType, setModelType] = useState<'classic' | 'slim'>('classic');
-  
-  // Use account skin if available, otherwise default
-  const currentSkin = skinUrl || (activeAccount?.username 
-    ? `https://minotar.net/skin/${activeAccount.username}` 
-    : undefined);
+
+  const currentSkin = skinUrl || (activeAccount?.username ? `https://minotar.net/skin/${activeAccount.username}` : undefined);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,9 +32,9 @@ const Skins = () => {
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-           setSkinUrl(event.target.result as string);
-           setLoading(false);
-           showToast('Скин успешно загружен из файла', 'success');
+          setSkinUrl(event.target.result as string);
+          setLoading(false);
+          showToast('Скин успешно загружен из файла', 'success');
         }
       };
       reader.readAsDataURL(file);
@@ -48,7 +44,6 @@ const Skins = () => {
   const applySkin = (url: string, name?: string) => {
     setLoading(true);
     setSkinUrl(url);
-    // Simulate loading delay
     setTimeout(() => {
       setLoading(false);
       showToast(`Скин ${name || ''} выбран`, 'success');
@@ -63,10 +58,8 @@ const Skins = () => {
     setLoading(true);
     showToast(`Поиск скина игрока ${searchQuery}...`, 'info');
 
-    // Use Minotar to get skin by username
-    // We try to load the image first to check if it exists
     const url = `https://minotar.net/skin/${searchQuery}`;
-    
+
     try {
       const img = new Image();
       img.src = url;
@@ -81,7 +74,7 @@ const Skins = () => {
         setIsSearching(false);
         showToast(`Игрок ${searchQuery} не найден`, 'error');
       };
-    } catch (error) {
+    } catch {
       setLoading(false);
       setIsSearching(false);
       showToast('Ошибка при поиске скина', 'error');
@@ -90,39 +83,39 @@ const Skins = () => {
 
   const handleSaveSkin = async () => {
     if (!skinUrl) {
-        showToast('Сначала выберите скин', 'warning');
-        return;
+      showToast('Сначала выберите скин', 'warning');
+      return;
     }
 
-    if (!activeAccount || !activeAccount.accessToken) {
-        showToast('Требуется авторизация через Microsoft (Лицензия)', 'error');
-        return;
+    if (!activeAccount || activeAccount.type !== 'microsoft') {
+      showToast('Требуется авторизация через Microsoft (Лицензия)', 'error');
+      return;
     }
 
     setLoading(true);
     showToast('Загрузка скина на серверы Mojang...', 'info');
 
-    if (window.electron) {
-        try {
-            const result = await window.electron.ipcRenderer.invoke('upload-skin', {
-                token: activeAccount.accessToken,
-                skinData: skinUrl,
-                variant: modelType
-            });
+    if (window.astra) {
+      try {
+        const result = await window.astra.skins.upload({
+          accountId: activeAccount.id,
+          skinData: skinUrl,
+          variant: modelType,
+        });
 
-            if (result.success) {
-                showToast('Скин успешно обновлен!', 'success');
-            } else {
-                showToast(`Ошибка: ${result.error}`, 'error');
-            }
-        } catch (e) {
-            showToast('Ошибка соединения с лаунчером', 'error');
-        } finally {
-            setLoading(false);
+        if (result.success) {
+          showToast('Скин успешно обновлен!', 'success');
+        } else {
+          showToast(`Ошибка: ${result.error}`, 'error');
         }
-    } else {
+      } catch {
+        showToast('Ошибка соединения с лаунчером', 'error');
+      } finally {
         setLoading(false);
-        showToast('Доступно только в приложении', 'warning');
+      }
+    } else {
+      setLoading(false);
+      showToast('Доступно только в приложении', 'warning');
     }
   };
 
@@ -136,37 +129,33 @@ const Skins = () => {
             Загрузить файл
             <input type="file" accept=".png" className="hidden" onChange={handleFileUpload} />
           </label>
-          <Button 
-            onClick={handleSaveSkin}
-            leftIcon={<Save className="w-5 h-5" />}
-          >
+          <Button onClick={handleSaveSkin} leftIcon={<Save className="w-5 h-5" />}>
             Применить
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-        {/* Left Column: Skin Controls */}
         <div className="lg:col-span-1 space-y-6">
           <div className="glass-card p-6 rounded-2xl">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Shirt className="w-5 h-5 text-primary" />
               Настройки модели
             </h2>
-            
+
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm text-text-secondary">Тип модели</label>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    variant={modelType === 'classic' ? 'outline' : 'ghost'} 
+                  <Button
+                    variant={modelType === 'classic' ? 'outline' : 'ghost'}
                     className={modelType === 'classic' ? 'text-primary border-primary bg-primary/10 hover:bg-primary/20' : ''}
                     onClick={() => setModelType('classic')}
                   >
                     Classic (4px)
                   </Button>
-                  <Button 
-                    variant={modelType === 'slim' ? 'outline' : 'ghost'} 
+                  <Button
+                    variant={modelType === 'slim' ? 'outline' : 'ghost'}
                     className={modelType === 'slim' ? 'text-primary border-primary bg-primary/10 hover:bg-primary/20' : ''}
                     onClick={() => setModelType('slim')}
                   >
@@ -186,22 +175,19 @@ const Skins = () => {
 
           <div className="glass-card p-6 rounded-2xl">
             <h2 className="text-xl font-bold mb-4">Библиотека скинов</h2>
-            
+
             <form onSubmit={handleSearchSkin} className="relative mb-4">
-              <input 
-                type="text" 
+              <Input
+                type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Никнейм игрока..." 
-                className="w-full bg-black/20 border border-white/10 rounded-lg pl-4 pr-10 py-2 text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
+                placeholder="Никнейм игрока..."
+                rightIcon={
+                  <button type="submit" disabled={isSearching} className="p-1 text-text-secondary hover:text-white transition-colors">
+                    {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  </button>
+                }
               />
-              <button 
-                type="submit"
-                disabled={isSearching}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-text-secondary hover:text-white transition-colors"
-              >
-                {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              </button>
             </form>
 
             <div className="grid grid-cols-4 gap-2">
@@ -222,14 +208,13 @@ const Skins = () => {
           </div>
         </div>
 
-        {/* Right Column: 3D Preview */}
         <div className="lg:col-span-2 glass-card rounded-2xl overflow-hidden relative border border-white/10 bg-gradient-to-br from-background-secondary/50 to-background/50">
           <div className="absolute top-4 right-4 z-10 flex gap-2">
             <Button size="icon" variant="secondary" className="bg-black/40 backdrop-blur-md hover:bg-white/10">
               <Download className="w-5 h-5" />
             </Button>
           </div>
-          
+
           <div className="w-full h-full min-h-[500px] relative">
             {loading && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-sm">
