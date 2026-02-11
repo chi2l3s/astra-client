@@ -27,26 +27,32 @@ export const TitleBar = () => {
   };
 
   return (
-    <div className="h-8 bg-background flex items-center justify-between px-4 select-none draggable border-b border-white/5">
-      <div className="text-xs font-medium text-text-secondary tracking-wider">
+    <div className="h-8 bg-background flex items-center px-4 select-none border-b border-white/5">
+      <div className="draggable flex-1 text-xs font-medium text-text-secondary tracking-wider">
         ASTRA LAUNCHER
       </div>
-      <div className="flex items-center gap-4 no-drag">
+      <div className="flex items-center gap-3 no-drag shrink-0">
         <button
+          type="button"
           onClick={handleMinimize}
-          className="text-text-secondary hover:text-white transition-colors"
+          className="w-8 h-8 rounded-md text-text-secondary hover:text-white transition-colors flex items-center justify-center"
+          aria-label="Свернуть"
         >
           <Minus className="w-4 h-4" />
         </button>
         <button
+          type="button"
           onClick={handleMaximize}
-          className="text-text-secondary hover:text-white transition-colors"
+          className="w-8 h-8 rounded-md text-text-secondary hover:text-white transition-colors flex items-center justify-center"
+          aria-label="Развернуть"
         >
-          <Square className="w-3 h-3" />
+          <Square className="w-3.5 h-3.5" />
         </button>
         <button
+          type="button"
           onClick={handleClose}
-          className="text-text-secondary hover:text-red-500 transition-colors"
+          className="w-8 h-8 rounded-md text-text-secondary hover:text-red-500 transition-colors flex items-center justify-center"
+          aria-label="Закрыть"
         >
           <X className="w-4 h-4" />
         </button>

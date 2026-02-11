@@ -39,6 +39,31 @@
     --color-secondary-alt: 255 255 255;
     --color-focus-ring: 16 185 129;
     --radius: 12px;
+    --ui-font-family: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --ui-density: 1;
+  }
+
+  :root[data-ui-font="default"] {
+    --ui-font-family: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  :root[data-ui-font="mono"] {
+    --ui-font-family: "JetBrains Mono", "SF Mono", ui-monospace, Consolas, monospace;
+  }
+  :root[data-ui-font="rounded"] {
+    --ui-font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  :root[data-ui-font="serif"] {
+    --ui-font-family: "Merriweather", "Times New Roman", serif;
+  }
+
+  :root[data-ui-density="compact"] {
+    --ui-density: 0.92;
+  }
+  :root[data-ui-density="comfortable"] {
+    --ui-density: 1;
+  }
+  :root[data-ui-density="spacious"] {
+    --ui-density: 1.08;
   }
 
   :root[data-theme="light"] {
@@ -230,6 +255,10 @@
   body {
     @apply bg-background text-text-primary antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-user-select: none;
+    user-select: none;
+    font-family: var(--ui-font-family);
+    font-size: calc(1rem * var(--ui-density));
   }
 
   button {

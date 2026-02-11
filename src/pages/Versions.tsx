@@ -7,6 +7,7 @@ import { useStore } from '../store/useStore';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useToast } from '../context/ToastContext';
+import { Accordion } from '../components/ui/Accordion';
 
 const Versions = () => {
   const [versions, setVersions] = useState<MinecraftVersion[]>([]);
@@ -70,6 +71,110 @@ const Versions = () => {
     return matchesSearch && matchesType;
   });
 
+  const groupKeyForVersion = (version: MinecraftVersion) => {
+    if (version.type === 'snapshot') return 'Snapshots';
+    const match = version.id.match(/^1\.(\d+)/);
+    if (match) return `1.${match[1]}`;
+    return 'Other';
+  };
+
+  const grouped = filteredVersions.reduce((acc, version) => {
+    const key = groupKeyForVersion(version);
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(version);
+    return acc;
+  }, {} as Record<string, MinecraftVersion[]>);
+
+  const releaseGroups = Object.keys(grouped)
+    .filter((key) => key.startsWith('1.'))
+    .sort((a, b) => {
+      const aNum = Number(a.split('.')[1] || 0);
+      const bNum = Number(b.split('.')[1] || 0);
+      return bNum - aNum;
+    });
+
+  const groupOrder = [
+    ...releaseGroups,
+    grouped.Snapshots?.length ? 'Snapshots' : null,
+    grouped.Other?.length ? 'Other' : null,
+  ].filter(Boolean) as string[];
+
+  const groupItems = groupOrder.map((key, index) => ({
+      id: key,
+      title: `Версии ${key}`,
+      subtitle: `${grouped[key].length} шт.`,
+      defaultOpen: index === 0,
+      content: (
+        <div className="flex flex-col">
+          {grouped[key].map((version) => {
+            const isInstalled = installedVersions.some((v) => v.id === version.id);
+            const downloadStatus = downloads[version.id];
+            const isDownloading = downloadStatus?.status === 'downloading';
+
+            return (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                key={version.id}
+                className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-white/5 border-b border-white/5 transition-colors group relative overflow-hidden"
+              >
+                {isDownloading && (
+                  <div
+                    className="absolute inset-0 bg-primary/10 transition-all duration-300 pointer-events-none"
+                    style={{ width: `${downloadStatus.progress}%` }}
+                  />
+                )}
+
+                <div className="col-span-4 font-medium text-white flex items-center gap-3 relative z-10">
+                  <span className={`w-2 h-2 rounded-full ${version.type === 'release' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                  {version.id}
+                </div>
+                <div className="col-span-3 text-text-secondary capitalize relative z-10">{version.type}</div>
+                <div className="col-span-3 text-text-secondary flex items-center gap-2 relative z-10">
+                  <Clock className="w-4 h-4" />
+                  {new Date(version.releaseTime).toLocaleDateString()}
+                </div>
+                <div className="col-span-2 flex justify-end relative z-10">
+                  {isDownloading ? (
+                    <div className="flex items-center gap-2 text-primary font-medium text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {Math.round(downloadStatus.progress)}%
+                    </div>
+                  ) : isInstalled ? (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="opacity-0 group-hover:opacity-100"
+                        onClick={() => handleExportMods(version.id)}
+                        title="Экспортировать список модов"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </Button>
+                      <div className="flex items-center gap-2 text-primary font-medium text-sm">
+                        <CheckCircle2 className="w-5 h-5" />
+                        <span className="hidden sm:inline">Установлено</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => handleDownload(version.id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Скачать версию"
+                    >
+                      <Download className="w-5 h-5" />
+                    </Button>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      ),
+    }));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
@@ -117,71 +222,9 @@ const Versions = () => {
               Загрузка списка версий...
             </div>
           ) : (
-            filteredVersions.slice(0, 50).map((version) => {
-              const isInstalled = installedVersions.some((v) => v.id === version.id);
-              const downloadStatus = downloads[version.id];
-              const isDownloading = downloadStatus?.status === 'downloading';
-
-              return (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  key={version.id}
-                  className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-white/5 border-b border-white/5 transition-colors group relative overflow-hidden"
-                >
-                  {isDownloading && (
-                    <div
-                      className="absolute inset-0 bg-primary/10 transition-all duration-300 pointer-events-none"
-                      style={{ width: `${downloadStatus.progress}%` }}
-                    />
-                  )}
-
-                  <div className="col-span-4 font-medium text-white flex items-center gap-3 relative z-10">
-                    <span className={`w-2 h-2 rounded-full ${version.type === 'release' ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                    {version.id}
-                  </div>
-                  <div className="col-span-3 text-text-secondary capitalize relative z-10">{version.type}</div>
-                  <div className="col-span-3 text-text-secondary flex items-center gap-2 relative z-10">
-                    <Clock className="w-4 h-4" />
-                    {new Date(version.releaseTime).toLocaleDateString()}
-                  </div>
-                  <div className="col-span-2 flex justify-end relative z-10">
-                    {isDownloading ? (
-                      <div className="flex items-center gap-2 text-primary font-medium text-sm">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        {Math.round(downloadStatus.progress)}%
-                      </div>
-                    ) : isInstalled ? (
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="opacity-0 group-hover:opacity-100"
-                          onClick={() => handleExportMods(version.id)}
-                          title="Экспортировать список модов"
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </Button>
-                        <div className="flex items-center gap-2 text-primary font-medium text-sm">
-                          <CheckCircle2 className="w-5 h-5" />
-                          <span className="hidden sm:inline">Установлено</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        onClick={() => handleDownload(version.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Скачать версию"
-                      >
-                        <Download className="w-5 h-5" />
-                      </Button>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })
+            <div className="p-4">
+              <Accordion items={groupItems} />
+            </div>
           )}
         </div>
       </div>

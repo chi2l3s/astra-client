@@ -8,6 +8,8 @@ export const ThemeManager: React.FC = () => {
     const root = document.documentElement;
     root.setAttribute('data-theme', preferences.theme);
     root.setAttribute('data-reduce-motion', preferences.reduceMotion ? 'true' : 'false');
+    root.setAttribute('data-ui-font', preferences.uiFont || 'default');
+    root.setAttribute('data-ui-density', preferences.uiDensity || 'comfortable');
     root.setAttribute('lang', preferences.language);
 
     if (preferences.accentColor) {
@@ -18,7 +20,7 @@ export const ThemeManager: React.FC = () => {
         root.style.setProperty('--color-brand-solid', `${rgb.r} ${rgb.g} ${rgb.b}`);
       }
     }
-  }, [preferences.theme, preferences.accentColor, preferences.reduceMotion, preferences.language]);
+  }, [preferences.theme, preferences.accentColor, preferences.reduceMotion, preferences.language, preferences.uiFont, preferences.uiDensity]);
 
   function hexToRgb(hex: string) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);

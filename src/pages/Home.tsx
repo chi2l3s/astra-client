@@ -19,6 +19,11 @@ const Home = () => {
     installedVersions,
     setSelectedVersion,
     setActiveAccount,
+    profiles,
+    activeProfileId,
+    setActiveProfile,
+    setLastProfile,
+    lastProfileId,
     downloads,
     preferences,
     playStats,
@@ -32,6 +37,8 @@ const Home = () => {
   const cleanupRef = useRef<null | (() => void)>(null);
 
   const isDownloading = selectedVersion && downloads[selectedVersion]?.status === 'downloading';
+  const activeProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0];
+  const lastProfile = profiles.find((p) => p.id === lastProfileId);
 
   useEffect(() => {
     if (!selectedVersion && installedVersions.length > 0) {
@@ -133,11 +140,14 @@ const Home = () => {
       await window.astra.game.launch({
         version: selectedVersion,
         username: activeAccount.username,
-        memory: preferences.memoryAllocation,
-        javaPath: preferences.javaPath,
-        jvmArgs: preferences.jvmArgs,
+        memory: activeProfile?.memoryAllocation ?? preferences.memoryAllocation,
+        javaPath: activeProfile?.javaPath ?? preferences.javaPath,
+        jvmArgs: activeProfile?.jvmArgs ?? preferences.jvmArgs,
         closeLauncherAfterStart: preferences.closeLauncherAfterStart,
       });
+      if (activeProfile?.id) {
+        setLastProfile(activeProfile.id);
+      }
       return;
     }
 
@@ -177,6 +187,12 @@ const Home = () => {
   const versionOptions = installedVersions.map((v) => ({
     value: v.id,
     label: v.id,
+    icon: <Gamepad2 className="w-4 h-4 text-primary" />,
+  }));
+
+  const profileOptions = profiles.map((p) => ({
+    value: p.id,
+    label: p.name,
     icon: <Gamepad2 className="w-4 h-4 text-primary" />,
   }));
 
@@ -277,6 +293,24 @@ const Home = () => {
         </div>
 
         <div className="col-span-1 flex flex-col gap-6">
+          <div className="bg-black/20 rounded-3xl p-6 border border-white/5 flex flex-col gap-4">
+            <div className="text-xs font-bold text-text-secondary uppercase tracking-wider">Быстрый запуск</div>
+            <div className="space-y-3">
+              <div className="text-sm text-text-secondary">Профиль</div>
+              <Select
+                options={profileOptions}
+                value={activeProfile?.id || ''}
+                onChange={(val) => setActiveProfile(val)}
+                placeholder="Выберите профиль"
+                className="w-full"
+              />
+            </div>
+            {lastProfile && (
+              <div className="mt-2 text-xs text-text-secondary">
+                Последний профиль: <span className="text-white">{lastProfile.name}</span>
+              </div>
+            )}
+          </div>
           <div className="bg-black/20 rounded-3xl p-6 border border-white/5 flex flex-col gap-4 max-h-[400px]">
             <ServerList />
           </div>
@@ -287,6 +321,17 @@ const Home = () => {
 
       <div className="sticky bottom-0 bg-background-secondary/80 backdrop-blur-xl border-t border-white/10 px-8 py-6 -mx-8 -mb-8 mt-auto flex items-center justify-between gap-8 z-20">
         <div className="flex items-center gap-6 flex-1">
+          <div className="w-64">
+            <label className="text-xs text-text-secondary font-bold uppercase tracking-wider mb-1.5 block">Профиль</label>
+            <Select
+              options={profileOptions}
+              value={activeProfile?.id || ''}
+              onChange={(val) => setActiveProfile(val)}
+              placeholder="Профиль запуска"
+              className="w-full"
+              direction="up"
+            />
+          </div>
           <div className="w-64">
             <label className="text-xs text-text-secondary font-bold uppercase tracking-wider mb-1.5 block">Аккаунт</label>
             <Select

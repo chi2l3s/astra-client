@@ -13,7 +13,9 @@ import {
   listScreenshots,
   installFromUrl,
 } from './services/files';
-import { installVersion, launchGame } from './services/launcher';
+import { installVersion, launchGame, detectJava } from './services/launcher';
+import { importOfficialLauncherSettings } from './services/launcherSettings';
+import { importModpack, exportModpack } from './services/modpack';
 const DiscordRPC = require('discord-rpc');
 
 const clientId = '1470031346473635995';
@@ -174,15 +176,6 @@ const createWindow = () => {
   } else {
     win.loadFile(path.join(DIST, 'index.html'));
   }
-
-  win.on('minimize', () => {
-    if (currentPreferences.minimizeToTray) {
-      win?.hide();
-      if (process.platform === 'darwin') {
-        app.dock.hide();
-      }
-    }
-  });
 
   win.on('close', (event) => {
     if (currentPreferences.minimizeToTray && !isQuitting) {
@@ -399,4 +392,60 @@ ipcMain.handle('settings-update', async (_event, prefs) => {
     telemetry: prefs.telemetry,
   });
   return true;
+});
+
+ipcMain.handle('java-detect', async (_event, { preferred }) => {
+  try {
+    const result = detectJava(preferred);
+    return { success: true, ...result };
+  } catch (error: any) {
+    return { success: false, error: error?.message || 'Detect failed' };
+  }
+});
+
+ipcMain.handle('java-download', async () => {
+  const { shell } = require('electron');
+  await shell.openExternal('https://adoptium.net/temurin/releases/?version=17');
+  return true;
+});
+
+ipcMain.handle('launcher-import-settings', async () => {
+  try {
+    const data = importOfficialLauncherSettings(app);
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error?.message || 'Import failed' };
+  }
+});
+
+ipcMain.handle('modpack-import', async (_event, { versionId }) => {
+  const { dialog } = require('electron');
+  const currentWin = BrowserWindow.getAllWindows()[0];
+  const { filePaths } = await dialog.showOpenDialog(currentWin, {
+    title: 'Импорт модпака',
+    filters: [{ name: 'Modpack', extensions: ['mrpack', 'zip'] }],
+    properties: ['openFile'],
+  });
+  if (!filePaths || filePaths.length === 0) return { canceled: true };
+  try {
+    return await importModpack(app, versionId, filePaths[0]);
+  } catch (error: any) {
+    return { success: false, error: error?.message || 'Import failed' };
+  }
+});
+
+ipcMain.handle('modpack-export', async (_event, { versionId }) => {
+  const { dialog } = require('electron');
+  const currentWin = BrowserWindow.getAllWindows()[0];
+  const { filePath } = await dialog.showSaveDialog(currentWin, {
+    title: 'Экспорт модпака',
+    defaultPath: `modpack-${versionId}.zip`,
+    filters: [{ name: 'ZIP', extensions: ['zip'] }],
+  });
+  if (!filePath) return { canceled: true };
+  try {
+    return await exportModpack(app, versionId, filePath);
+  } catch (error: any) {
+    return { success: false, error: error?.message || 'Export failed' };
+  }
 });

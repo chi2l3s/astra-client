@@ -60,6 +60,10 @@ const findBestJava = (preferred?: string) => {
   return { javaPath: bestJava, javaVersion: maxVersion };
 };
 
+export const detectJava = (preferred?: string) => {
+  return findBestJava(preferred);
+};
+
 const resolveFabric = async (rootPath: string, version: string, win?: BrowserWindow) => {
   let fabricLoaderVersion = '0.16.10';
 

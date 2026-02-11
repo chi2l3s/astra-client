@@ -32,6 +32,20 @@ export interface AstraAPI {
     onStatus: (handler: (data: any) => void) => () => void;
     restart: () => Promise<boolean>;
   };
+  settings: {
+    update: (prefs: any) => Promise<boolean>;
+  };
+  java: {
+    detect: (preferred?: string) => Promise<any>;
+    download: () => Promise<boolean>;
+  };
+  launchers: {
+    importSettings: () => Promise<any>;
+  };
+  modpack: {
+    import: (versionId: string) => Promise<any>;
+    export: (versionId: string) => Promise<any>;
+  };
   theme: {
     save: (themeData: any) => Promise<any>;
     load: () => Promise<any>;

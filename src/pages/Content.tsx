@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Package, Map, Box, Search, Trash2, FolderOpen, Download, Globe, Star, Calendar } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Package, Map, Box, Search, Trash2, FolderOpen, Download, Globe, Star, Calendar, Upload, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '../context/ToastContext';
 import { modrinthService, ModrinthProject } from '../services/modrinth';
@@ -28,11 +28,17 @@ const Content = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ModrinthProject[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
   const [sortBy, setSortBy] = useState('relevance');
   const { showToast } = useToast();
   const { selectedVersion } = useStore();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const pageSize = 50;
 
   const [installedFiles, setInstalledFiles] = useState<any[]>([]);
+  const [modUpdates, setModUpdates] = useState<Record<string, { file: any; project: ModrinthProject }>>({});
 
   const getTargetFolder = () => {
     if (activeTab === 'resourcepacks') return 'resourcepacks';
@@ -46,7 +52,8 @@ const Content = () => {
       try {
         const folder = getTargetFolder();
         const files = await window.astra.files.listInstalled(selectedVersion, folder);
-        setInstalledFiles(files);
+        const filtered = activeTab === 'worlds' ? files.filter((f: any) => f.isDirectory) : files;
+        setInstalledFiles(filtered);
       } catch {
       } finally {
         setIsLoading(false);
@@ -57,6 +64,10 @@ const Content = () => {
   useEffect(() => {
     loadInstalledFiles();
   }, [loadInstalledFiles]);
+
+  useEffect(() => {
+    setModUpdates({});
+  }, [activeTab, viewMode, selectedVersion]);
 
   const handleDelete = async (filePath: string) => {
     if (window.astra) {
@@ -73,41 +84,162 @@ const Content = () => {
     }
   };
 
-  const handleSearch = useCallback(async () => {
-    if (viewMode === 'browse') {
-      setIsLoading(true);
+  const handleImportModpack = async () => {
+    if (!window.astra || !selectedVersion) {
+      showToast('Доступно только в приложении и при выбранной версии', 'warning');
+      return;
+    }
+    const result = await window.astra.modpack.import(selectedVersion);
+    if (result?.success) {
+      showToast('Модпак импортирован', 'success');
+      loadInstalledFiles();
+    } else if (!result?.canceled) {
+      showToast(result?.error || 'Ошибка импорта', 'error');
+    }
+  };
+
+  const handleExportModpack = async () => {
+    if (!window.astra || !selectedVersion) {
+      showToast('Доступно только в приложении и при выбранной версии', 'warning');
+      return;
+    }
+    const result = await window.astra.modpack.export(selectedVersion);
+    if (result?.success) {
+      showToast('Модпак экспортирован', 'success');
+    } else if (!result?.canceled) {
+      showToast(result?.error || 'Ошибка экспорта', 'error');
+    }
+  };
+
+  const normalizeModName = (filename: string) => {
+    const base = filename.replace(/\.jar$/i, '');
+    const cleaned = base.replace(/[-_]?v?\d+(\.\d+)+.*$/i, '');
+    return cleaned.replace(/[_-]+/g, ' ').trim();
+  };
+
+  const checkModUpdates = async () => {
+    if (viewMode !== 'installed' || activeTab !== 'mods') return;
+    if (!selectedVersion) {
+      showToast('Сначала выберите версию Minecraft', 'warning');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const updates: Record<string, { file: any; project: ModrinthProject }> = {};
+      const versionNumber = selectedVersion.replace(/[^0-9.]/g, '');
+      for (const file of installedFiles) {
+        const query = normalizeModName(file.name);
+        if (!query) continue;
+        const [project] = await modrinthService.searchProjects(query, 1, 0, '[["project_type:mod"]]', 'relevance');
+        if (!project) continue;
+        const versions = await modrinthService.getProjectVersions(project.slug);
+        const compatible = versions.find((v: any) => {
+          const matchesGame = v.game_versions?.includes(versionNumber);
+          const matchesLoader = Array.isArray(v.loaders) ? v.loaders.includes('fabric') : true;
+          return matchesGame && matchesLoader;
+        });
+        if (!compatible) continue;
+        const latestFile = compatible.files?.find((f: any) => f.primary) || compatible.files?.[0];
+        if (!latestFile || latestFile.filename === file.name) continue;
+        updates[file.path] = { file: latestFile, project };
+      }
+      setModUpdates(updates);
+      showToast(Object.keys(updates).length ? 'Найдены обновления' : 'Обновлений нет', 'info');
+    } catch {
+      showToast('Ошибка при проверке обновлений', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateAllMods = async () => {
+    if (!window.astra || !selectedVersion) return;
+    const entries = Object.entries(modUpdates);
+    if (entries.length === 0) {
+      showToast('Обновлений нет', 'info');
+      return;
+    }
+    for (const [filePath, update] of entries) {
+      try {
+        await window.astra.files.installFromUrl({
+          url: update.file.url,
+          filename: update.file.filename,
+          versionId: selectedVersion,
+          folder: 'mods',
+        });
+        await window.astra.files.deleteFile(filePath);
+      } catch {
+      }
+    }
+    setModUpdates({});
+    loadInstalledFiles();
+    showToast('Моды обновлены', 'success');
+  };
+
+  const getFacets = () => {
+    if (activeTab === 'mods') return '[["project_type:mod"]]';
+    if (activeTab === 'resourcepacks') return '[["project_type:resourcepack"]]';
+    if (activeTab === 'worlds') return '[["project_type:modpack"]]';
+    return '';
+  };
+
+  const fetchProjects = useCallback(
+    async (nextOffset: number, append: boolean) => {
+      if (viewMode !== 'browse') return;
+      if (append) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
       try {
         const query = searchQuery.trim() || '';
-
-        let facets = '';
-        if (activeTab === 'mods') {
-          facets = '[["project_type:mod"]]';
-        } else if (activeTab === 'resourcepacks') {
-          facets = '[["project_type:resourcepack"]]';
-        } else if (activeTab === 'worlds') {
-          facets = '[["project_type:modpack"]]';
-        }
-
-        const results = await modrinthService.searchProjects(query, 20, 0, facets, sortBy);
-        setSearchResults(results);
+        const facets = getFacets();
+        const results = await modrinthService.searchProjects(query, pageSize, nextOffset, facets, sortBy as any);
+        setHasMore(results.length === pageSize);
+        setOffset(nextOffset);
+        setSearchResults((prev) => {
+          if (!append) return results;
+          const existing = new Set(prev.map((p) => p.id));
+          const merged = [...prev, ...results.filter((p) => !existing.has(p.id))];
+          return merged;
+        });
       } catch {
         showToast('Ошибка при загрузке контента', 'error');
       } finally {
         setIsLoading(false);
+        setIsLoadingMore(false);
       }
-    }
-  }, [searchQuery, viewMode, activeTab, showToast, sortBy]);
+    },
+    [activeTab, searchQuery, sortBy, showToast, viewMode]
+  );
 
   useEffect(() => {
-    handleSearch();
-  }, []);
-
-  useEffect(() => {
+    if (viewMode !== 'browse') return;
+    setHasMore(true);
+    setOffset(0);
     const timer = setTimeout(() => {
-      handleSearch();
-    }, 500);
+      fetchProjects(0, false);
+    }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, handleSearch]);
+  }, [searchQuery, activeTab, sortBy, viewMode, fetchProjects]);
+
+  const loadMore = useCallback(
+    (nextPage: number) => {
+      if (isLoading || isLoadingMore || !hasMore) return;
+      const nextOffset = nextPage * pageSize;
+      fetchProjects(nextOffset, true);
+    },
+    [fetchProjects, hasMore, isLoading, isLoadingMore, pageSize]
+  );
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el || viewMode !== 'browse') return;
+    if (isLoading || isLoadingMore || !hasMore) return;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 240) {
+      loadMore(Math.floor((offset + pageSize) / pageSize));
+    }
+  };
 
   const handleInstall = async (project: ModrinthProject) => {
     if (!selectedVersion) {
@@ -241,27 +373,43 @@ const Content = () => {
           <Button variant="secondary" onClick={handleOpenFolder} leftIcon={<FolderOpen className="w-5 h-5" />} className="hidden md:flex">
             Папка
           </Button>
+          <Button variant="secondary" onClick={handleImportModpack} leftIcon={<Download className="w-5 h-5" />}>
+            Импорт
+          </Button>
+          <Button variant="secondary" onClick={handleExportModpack} leftIcon={<Upload className="w-5 h-5" />}>
+            Экспорт
+          </Button>
+          {activeTab === 'mods' && viewMode === 'installed' && (
+            <Button variant="secondary" onClick={checkModUpdates} leftIcon={<RefreshCw className="w-5 h-5" />}>
+              Проверить обновления
+            </Button>
+          )}
+          {activeTab === 'mods' && viewMode === 'installed' && Object.keys(modUpdates).length > 0 && (
+            <Button variant="primary" onClick={updateAllMods} leftIcon={<Download className="w-5 h-5" />}>
+              Обновить все
+            </Button>
+          )}
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-gradient-to-b from-transparent to-black/20">
+        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-gradient-to-b from-transparent to-black/20">
           {viewMode === 'browse' ? (
             <div className="grid grid-cols-1 gap-4">
-              {isLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <Skeleton className="w-24 h-24 rounded-xl shrink-0" />
-                    <div className="flex-1 space-y-3">
-                      <Skeleton className="h-6 w-1/3 rounded-lg" />
-                      <Skeleton className="h-4 w-2/3 rounded-lg" />
-                      <div className="flex gap-2">
-                        <Skeleton className="h-4 w-20 rounded-lg" />
-                        <Skeleton className="h-4 w-20 rounded-lg" />
+                {isLoading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                      <Skeleton className="w-24 h-24 rounded-xl shrink-0" />
+                      <div className="flex-1 space-y-3">
+                        <Skeleton className="h-6 w-1/3 rounded-lg" />
+                        <Skeleton className="h-4 w-2/3 rounded-lg" />
+                        <div className="flex gap-2">
+                          <Skeleton className="h-4 w-20 rounded-lg" />
+                          <Skeleton className="h-4 w-20 rounded-lg" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
-              ) : (
-                searchResults.map((project) => (
+                  ))
+                ) : (
+                  searchResults.map((project) => (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -322,17 +470,24 @@ const Content = () => {
                       </div>
                     </div>
                   </motion.div>
-                ))
-              )}
+                  ))
+                )}
 
-              {!isLoading && searchResults.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-20 text-text-secondary opacity-60">
-                  <Package className="w-16 h-16 mb-4" />
-                  <p className="text-lg font-medium">Ничего не найдено</p>
-                  <p className="text-sm">Попробуйте изменить запрос</p>
-                </div>
-              )}
-            </div>
+                {!isLoading && searchResults.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-20 text-text-secondary opacity-60">
+                    <Package className="w-16 h-16 mb-4" />
+                    <p className="text-lg font-medium">Ничего не найдено</p>
+                    <p className="text-sm">Попробуйте изменить запрос</p>
+                  </div>
+                )}
+
+                {isLoadingMore && (
+                  <div className="flex items-center justify-center py-6 text-text-secondary">
+                    <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mr-3" />
+                    Загрузка...
+                  </div>
+                )}
+              </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {isLoading ? (
@@ -355,6 +510,11 @@ const Content = () => {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-lg text-white truncate">{file.name}</h3>
                       <p className="text-text-secondary text-xs mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      {activeTab === 'mods' && modUpdates[file.path] && (
+                        <p className="text-xs text-primary mt-1">
+                          Обновление доступно: {modUpdates[file.path].file.filename}
+                        </p>
+                      )}
                     </div>
 
                     <Button onClick={() => handleDelete(file.path)} variant="danger" size="icon" title="Удалить">

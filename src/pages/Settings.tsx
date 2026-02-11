@@ -6,6 +6,7 @@ import {
   Download,
   Upload,
   Trash2,
+  Plus,
   Cpu,
   HardDrive,
   Monitor,
@@ -16,6 +17,7 @@ import {
   Cloud,
   Speaker,
   Sparkles,
+  Check,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Select } from '../components/ui/Select';
@@ -25,7 +27,7 @@ import { Slider } from '../components/ui/Slider';
 import { useToast } from '../context/ToastContext';
 
 const Settings = () => {
-  const { preferences, updatePreferences } = useStore();
+  const { preferences, updatePreferences, profiles, activeProfileId, addProfile, updateProfile, removeProfile, setActiveProfile, setSelectedVersion } = useStore();
   const { showToast } = useToast();
   const [diskUsage, setDiskUsage] = useState<string>('Загрузка...');
   const lastSyncRef = useRef(0);
@@ -77,6 +79,8 @@ const Settings = () => {
       showNews: true,
       telemetry: false,
       crashReports: true,
+      uiFont: 'default',
+      uiDensity: 'comfortable',
     });
     showToast('Настройки сброшены', 'info');
   };
@@ -150,6 +154,41 @@ const Settings = () => {
     }
   };
 
+  const handleDetectJava = async () => {
+    if (!window.astra?.java?.detect) return;
+    const result = await window.astra.java.detect(preferences.javaPath);
+    if (result?.success) {
+      updateAndSync({ javaPath: result.javaPath });
+      showToast(`Java найдена: ${result.javaVersion}`, 'success');
+    } else {
+      showToast(result?.error || 'Java не найдена', 'error');
+    }
+  };
+
+  const handleDownloadJava = async () => {
+    if (!window.astra?.java?.download) return;
+    await window.astra.java.download();
+  };
+
+  const handleImportLauncher = async () => {
+    if (!window.astra?.launchers?.importSettings) return;
+    const result = await window.astra.launchers.importSettings();
+    if (result?.success && result?.data) {
+      const { javaArgs, resolution, lastVersionId } = result.data;
+      updateAndSync({
+        jvmArgs: javaArgs || preferences.jvmArgs,
+        windowWidth: resolution?.width || preferences.windowWidth,
+        windowHeight: resolution?.height || preferences.windowHeight,
+      });
+      if (lastVersionId) {
+        setSelectedVersion(lastVersionId);
+      }
+      showToast('Настройки импортированы', 'success');
+    } else {
+      showToast(result?.error || 'Импорт не удался', 'error');
+    }
+  };
+
   const themeOptions = [
     { value: 'dark', label: 'Темная (Default)', icon: <div className="w-3 h-3 rounded-full bg-gray-900 border border-gray-700" /> },
     { value: 'light', label: 'Светлая', icon: <div className="w-3 h-3 rounded-full bg-white border border-gray-200" /> },
@@ -169,6 +208,32 @@ const Settings = () => {
     { value: 'stable', label: 'Stable' },
     { value: 'beta', label: 'Beta' },
   ];
+
+  const fontOptions = [
+    { value: 'default', label: 'Default' },
+    { value: 'mono', label: 'Mono' },
+    { value: 'rounded', label: 'Rounded' },
+    { value: 'serif', label: 'Serif' },
+  ];
+
+  const densityOptions = [
+    { value: 'compact', label: 'Compact' },
+    { value: 'comfortable', label: 'Comfortable' },
+    { value: 'spacious', label: 'Spacious' },
+  ];
+
+  const handleAddProfile = () => {
+    const id = `profile-${Date.now()}`;
+    addProfile({
+      id,
+      name: `Профиль ${profiles.length + 1}`,
+      versionId: 'latest',
+      memoryAllocation: preferences.memoryAllocation,
+      jvmArgs: preferences.jvmArgs,
+      javaPath: preferences.javaPath,
+    });
+    setActiveProfile(id);
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20">
@@ -275,6 +340,85 @@ const Settings = () => {
 
           <section className="space-y-4">
             <h2 className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-2 pl-1">
+              <Layout className="w-4 h-4" />
+              Профили запуска
+            </h2>
+            <div className="glass-card p-6 rounded-2xl space-y-4 border border-white/5 bg-[#121214]/50">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-text-secondary">Создавайте наборы настроек под разные версии</div>
+                <Button variant="secondary" onClick={handleAddProfile} leftIcon={<Plus className="w-4 h-4" />}>
+                  Новый профиль
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                {profiles.map((profile) => (
+                  <div
+                    key={profile.id}
+                    className={`p-4 rounded-xl border transition-colors ${
+                      activeProfileId === profile.id ? 'border-primary/60 bg-primary/10' : 'border-white/10 bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <Input
+                          value={profile.name}
+                          onChange={(e) => updateProfile(profile.id, { name: e.target.value })}
+                          className="text-sm"
+                        />
+                        <div className="flex gap-2 mt-2">
+                          <Input
+                            value={profile.versionId}
+                            onChange={(e) => updateProfile(profile.id, { versionId: e.target.value })}
+                            className="text-xs font-mono"
+                            placeholder="Версия (например 1.20.4)"
+                          />
+                          <Input
+                            type="number"
+                            value={profile.memoryAllocation}
+                            onChange={(e) => updateProfile(profile.id, { memoryAllocation: Number(e.target.value) || 1024 })}
+                            className="text-xs font-mono"
+                            placeholder="RAM"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="icon"
+                          variant={activeProfileId === profile.id ? 'primary' : 'ghost'}
+                          onClick={() => setActiveProfile(profile.id)}
+                          title="Сделать активным"
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        {profile.id !== 'default' && (
+                          <Button size="icon" variant="danger" onClick={() => removeProfile(profile.id)} title="Удалить">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                      <Input
+                        value={profile.javaPath || ''}
+                        onChange={(e) => updateProfile(profile.id, { javaPath: e.target.value })}
+                        placeholder="Путь к Java (опционально)"
+                        className="text-xs"
+                      />
+                      <Input
+                        value={profile.jvmArgs || ''}
+                        onChange={(e) => updateProfile(profile.id, { jvmArgs: e.target.value })}
+                        placeholder="JVM args"
+                        className="text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-2 pl-1">
               <Cpu className="w-4 h-4" />
               Производительность
             </h2>
@@ -343,8 +487,19 @@ const Settings = () => {
                       className="flex-1 text-sm"
                       containerClassName="flex-1"
                     />
-                    <Button size="icon" variant="secondary">
+                    <Button size="icon" variant="secondary" onClick={handleDetectJava} title="Автоопределить Java">
                       <Folder className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" size="sm" onClick={handleDetectJava}>
+                      Автоопределить
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={handleDownloadJava}>
+                      Скачать Java
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={handleImportLauncher}>
+                      Импорт из Minecraft Launcher
                     </Button>
                   </div>
                 </div>
@@ -403,6 +558,27 @@ const Settings = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-white uppercase tracking-wider">{preferences.accentColor}</p>
                   </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-white/5">
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-text-secondary block">Шрифт интерфейса</label>
+                  <Select
+                    options={fontOptions}
+                    value={preferences.uiFont}
+                    onChange={(val) => updateAndSync({ uiFont: val as any })}
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-text-secondary block">Плотность UI</label>
+                  <Select
+                    options={densityOptions}
+                    value={preferences.uiDensity}
+                    onChange={(val) => updateAndSync({ uiDensity: val as any })}
+                    className="w-full"
+                  />
                 </div>
               </div>
 

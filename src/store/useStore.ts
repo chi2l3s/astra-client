@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, Account, InstalledVersion, UserPreferences, Server, PlayStats } from '../types';
+import { User, Account, InstalledVersion, UserPreferences, Server, PlayStats, LaunchProfile } from '../types';
 
 interface DownloadStatus {
   versionId: string;
@@ -16,6 +16,9 @@ interface AppState {
   selectedVersion: string | null;
   isLoading: boolean;
   preferences: UserPreferences;
+  profiles: LaunchProfile[];
+  activeProfileId: string | null;
+  lastProfileId: string | null;
   downloads: Record<string, DownloadStatus>;
   servers: Server[];
   playStats: PlayStats;
@@ -27,6 +30,11 @@ interface AppState {
   setLoading: (loading: boolean) => void;
   setSelectedVersion: (versionId: string) => void;
   updatePreferences: (prefs: Partial<UserPreferences>) => void;
+  addProfile: (profile: LaunchProfile) => void;
+  updateProfile: (profileId: string, patch: Partial<LaunchProfile>) => void;
+  removeProfile: (profileId: string) => void;
+  setActiveProfile: (profileId: string) => void;
+  setLastProfile: (profileId: string) => void;
   startDownload: (versionId: string) => void;
   updateDownloadProgress: (versionId: string, progress: number) => void;
   completeDownload: (versionId: string) => void;
@@ -56,6 +64,8 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   showNews: true,
   telemetry: false,
   crashReports: true,
+  uiFont: 'default',
+  uiDensity: 'comfortable',
 };
 
 const DEFAULT_STATS: PlayStats = {
@@ -75,6 +85,18 @@ export const useStore = create<AppState>()(
       selectedVersion: null,
       isLoading: false,
       preferences: DEFAULT_PREFERENCES,
+      profiles: [
+        {
+          id: 'default',
+          name: 'Default',
+          versionId: 'latest',
+          memoryAllocation: DEFAULT_PREFERENCES.memoryAllocation,
+          jvmArgs: DEFAULT_PREFERENCES.jvmArgs,
+          javaPath: DEFAULT_PREFERENCES.javaPath,
+        },
+      ],
+      activeProfileId: 'default',
+      lastProfileId: null,
       downloads: {},
       servers: [],
       playStats: DEFAULT_STATS,
@@ -95,12 +117,46 @@ export const useStore = create<AppState>()(
           })),
         })),
       setLoading: (loading) => set({ isLoading: loading }),
-      setSelectedVersion: (versionId) => set({ selectedVersion: versionId }),
+      setSelectedVersion: (versionId) =>
+        set((state) => ({
+          selectedVersion: versionId,
+          profiles: state.profiles.map((p) =>
+            p.id === state.activeProfileId ? { ...p, versionId } : p
+          ),
+        })),
 
       updatePreferences: (prefs) =>
         set((state) => ({
           preferences: { ...state.preferences, ...prefs },
         })),
+
+      addProfile: (profile) =>
+        set((state) => ({
+          profiles: [...state.profiles, profile],
+        })),
+      updateProfile: (profileId, patch) =>
+        set((state) => {
+          const updatedProfiles = state.profiles.map((p) => (p.id === profileId ? { ...p, ...patch } : p));
+          const shouldUpdateVersion = state.activeProfileId === profileId && typeof patch.versionId === 'string';
+          return {
+            profiles: updatedProfiles,
+            selectedVersion: shouldUpdateVersion && patch.versionId !== 'latest' ? patch.versionId : state.selectedVersion,
+          };
+        }),
+      removeProfile: (profileId) =>
+        set((state) => ({
+          profiles: state.profiles.filter((p) => p.id !== profileId),
+          activeProfileId: state.activeProfileId === profileId ? 'default' : state.activeProfileId,
+        })),
+      setActiveProfile: (profileId) =>
+        set((state) => {
+          const profile = state.profiles.find((p) => p.id === profileId);
+          return {
+            activeProfileId: profileId,
+            selectedVersion: profile?.versionId && profile.versionId !== 'latest' ? profile.versionId : state.selectedVersion,
+          };
+        }),
+      setLastProfile: (profileId) => set({ lastProfileId: profileId }),
 
       startDownload: (versionId) =>
         set((state) => ({

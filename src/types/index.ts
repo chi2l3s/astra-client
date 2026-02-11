@@ -26,6 +26,18 @@ export interface UserPreferences {
   showNews: boolean;
   telemetry: boolean;
   crashReports: boolean;
+  uiFont: 'default' | 'mono' | 'rounded' | 'serif';
+  uiDensity: 'compact' | 'comfortable' | 'spacious';
+}
+
+export interface LaunchProfile {
+  id: string;
+  name: string;
+  versionId: string;
+  memoryAllocation: number;
+  jvmArgs?: string;
+  javaPath?: string;
+  lastUsedAt?: string;
 }
 
 export interface Server {

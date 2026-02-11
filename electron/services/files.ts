@@ -66,7 +66,7 @@ export const listInstalledFiles = (app: App, versionId: string, folder: string) 
   return files.map((file) => {
     const fullPath = path.join(rootPath, file);
     const stats = fs.statSync(fullPath);
-    return { name: file, path: fullPath, size: stats.size };
+    return { name: file, path: fullPath, size: stats.size, isDirectory: stats.isDirectory() };
   });
 };
 

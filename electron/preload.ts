@@ -33,6 +33,10 @@ contextBridge.exposeInMainWorld('astra', {
     openFile: (filePath: string) => ipcRenderer.invoke('open-file', { filePath }),
     deleteFile: (filePath: string) => ipcRenderer.invoke('delete-file', { filePath }),
   },
+  modpack: {
+    import: (versionId: string) => ipcRenderer.invoke('modpack-import', { versionId }),
+    export: (versionId: string) => ipcRenderer.invoke('modpack-export', { versionId }),
+  },
   game: {
     installVersion: (version: string) => ipcRenderer.invoke('install-version', { version }),
     launch: (payload: any) => ipcRenderer.invoke('launch-game', payload),
@@ -48,6 +52,13 @@ contextBridge.exposeInMainWorld('astra', {
   },
   settings: {
     update: (prefs: any) => ipcRenderer.invoke('settings-update', prefs),
+  },
+  java: {
+    detect: (preferred?: string) => ipcRenderer.invoke('java-detect', { preferred }),
+    download: () => ipcRenderer.invoke('java-download'),
+  },
+  launchers: {
+    importSettings: () => ipcRenderer.invoke('launcher-import-settings'),
   },
   theme: {
     save: (themeData: any) => ipcRenderer.invoke('save-theme', themeData),
